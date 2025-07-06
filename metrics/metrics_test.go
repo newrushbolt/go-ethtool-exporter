@@ -1,4 +1,4 @@
-package metrics_test
+package metrics
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/newrushbolt/go-ethtool-exporter/metrics"
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/stretchr/testify/assert"
 
@@ -72,7 +71,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 	labels := map[string]string{
 		"device": "test_device",
 	}
-	metrics.MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels)
+	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels)
 
 	textFilePath := fmt.Sprintf("../.TestAbstractData-%d.prom", time.Now().Unix())
 	metricRegistry.MustWriteTextfile(textFilePath)
@@ -106,7 +105,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 // 			statisticsDataRaw := string(fixtureSourceData)
 // 			statisticsConfig := statistics.CollectConfig{}.Default()
 // 			statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
-// 			metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
+// 			MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
 
 // 			// driver_info
 // 			driverInfoConfig := driver_info.CollectConfig{
@@ -121,7 +120,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 // 			}
 // 			driverInfoDataRaw := string(fixtureSourceData)
 // 			driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
-// 			metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{})
+// 			MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{})
 
 // 			fmt.Printf("Total metrics: %+v", metricRegistry)
 // 		})

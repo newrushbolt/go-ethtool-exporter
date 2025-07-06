@@ -1,4 +1,4 @@
-package registry_test
+package registry
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,8 +13,8 @@ func TestRegistrySimpleMetric(t *testing.T) {
 	expectedMetricResult := `test_metric{key1="value1"} 16.13
 `
 
-	var metricList registry.Registry
-	metricRecordSimple := registry.MetricRecord{
+	var metricList Registry
+	metricRecordSimple := MetricRecord{
 		Name:   "test_metric",
 		Labels: map[string]string{"key1": "value1"},
 		Value:  16.13,
@@ -51,12 +50,12 @@ func TestRegistryTooManyLabels(t *testing.T) {
 		"key16": "value16",
 		"key17": "value17",
 	}
-	metricRecordTooMuchLabels := registry.MetricRecord{
+	metricRecordTooMuchLabels := MetricRecord{
 		Name:   "test_metric",
 		Labels: tooMuchLabels,
 		Value:  1,
 	}
-	var metricList registry.Registry
+	var metricList Registry
 	metricList = append(metricList, metricRecordTooMuchLabels)
 
 	textFilePath := fmt.Sprintf("../.TestRegistryData-%d.prom", time.Now().UnixNano())
@@ -68,7 +67,7 @@ func TestRegistryTooManyLabels(t *testing.T) {
 }
 
 func TestRegistryBrokenPath(t *testing.T) {
-	var metricList registry.Registry
+	var metricList Registry
 
 	textFilePath := fmt.Sprintf("/non-existed-root-dir/.TestRegistryData-%d.prom", time.Now().UnixNano())
 	assert.Panics(t, func() { metricList.MustWriteTextfile(textFilePath) })
