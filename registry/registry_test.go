@@ -23,9 +23,9 @@ func TestRegistrySimpleMetric(t *testing.T) {
 
 	textFilePath := fmt.Sprintf("../.TestRegistryData-%d.prom", time.Now().UnixNano())
 	metricList.MustWriteTextfile(textFilePath)
+	defer os.Remove(textFilePath)
 
 	metricsResult, err := os.ReadFile(textFilePath)
-
 	assert.NoError(t, err)
 	assert.Equal(t, expectedMetricResult, string(metricsResult))
 }
@@ -60,6 +60,7 @@ func TestRegistryTooManyLabels(t *testing.T) {
 
 	textFilePath := fmt.Sprintf("../.TestRegistryData-%d.prom", time.Now().UnixNano())
 	metricList.MustWriteTextfile(textFilePath)
+	defer os.Remove(textFilePath)
 
 	metricsResult, err := os.ReadFile(textFilePath)
 	assert.NoError(t, err)
@@ -71,4 +72,5 @@ func TestRegistryBrokenPath(t *testing.T) {
 
 	textFilePath := fmt.Sprintf("/non-existed-root-dir/.TestRegistryData-%d.prom", time.Now().UnixNano())
 	assert.Panics(t, func() { metricList.MustWriteTextfile(textFilePath) })
+	defer os.Remove(textFilePath)
 }
