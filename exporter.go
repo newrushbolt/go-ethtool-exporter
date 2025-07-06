@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os/exec"
 	"path"
+	"strconv"
+	"strings"
 
 	"github.com/alecthomas/kingpin/v2"
 
@@ -45,6 +47,9 @@ var (
 
 	// Absent metrics settings
 	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
+
+	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
+	allowedInterfaceTypesStr = kingpin.Flag("allowed-interface-types", "Comma-separated list of allowed interface types (see if_arp.h)").Default("1").String()
 )
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string) string {
@@ -64,9 +69,27 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 	return ethtoolOutput
 }
 
+func parseAllowedInterfaceTypes(typesStr string) []int {
+	var types []int
+	for _, t := range strings.Split(typesStr, ",") {
+		t = strings.TrimSpace(t)
+		if t == "" {
+			continue
+		}
+		v, err := strconv.Atoi(t)
+		if err != nil {
+			slog.Error("Invalid interface type in allowed-interface-types", "allowed-interface-types", typesStr, "interface-type", t, "error", err)
+			continue
+		}
+		types = append(types, v)
+	}
+	return types
+}
+
 func main() {
 	kingpin.Parse()
-	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts)
+	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
+	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts, allowedTypes)
 	for _, interfaceName := range interfaces {
 		var metricRegistry registry.Registry
 

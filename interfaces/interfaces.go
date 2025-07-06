@@ -10,14 +10,8 @@ import (
 	"strings"
 )
 
-func isInterfaceTypeValid(devicePath string) bool {
+func isInterfaceTypeValid(devicePath string, allowedInterfaceTypes []int) bool {
 	typePath := path.Join(devicePath, "type")
-	allowedInterfaceTypes := []int{
-		// 1 is ethernet
-		1,
-		// Other protocol types
-		// https://github.com/torvalds/linux/blob/master/include/uapi/linux/if_arp.h#L29
-	}
 	interfaceTypeRaw, err := os.ReadFile(typePath)
 	if err != nil {
 		slog.Debug("Cannot read device type for device", "devicePath", devicePath, "error", err)
@@ -53,7 +47,7 @@ func isInterfaceBonded(devicePath string) bool {
 	return true
 }
 
-func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool) []string {
+func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool, allowedInterfaceTypes []int) []string {
 	resultInterfaces := []string{}
 
 	allInterfaces, err := os.ReadDir(netClassDirectory)
@@ -70,7 +64,7 @@ func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool) []s
 		}
 
 		interfacePath := path.Join(netClassDirectory, deviceName)
-		if !isInterfaceTypeValid(interfacePath) {
+		if !isInterfaceTypeValid(interfacePath, allowedInterfaceTypes) {
 			slog.Debug("Not a valid device type, skipping", "deviceName", deviceName)
 			continue
 		}
