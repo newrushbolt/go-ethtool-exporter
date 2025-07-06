@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"path"
 
@@ -56,7 +57,7 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 	}
 
 	if err != nil {
-		fmt.Printf("Cannot run %s %s %s: %v\n", ethtoolPath, ethtoolMode, interfaceName, err)
+		slog.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "interfaceName", interfaceName, "error", err)
 		return ""
 	}
 	ethtoolOutput := string(ethtoolOutputRaw)

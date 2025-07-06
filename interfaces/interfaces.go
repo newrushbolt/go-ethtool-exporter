@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"slices"
@@ -19,16 +20,16 @@ func isInterfaceTypeValid(devicePath string) bool {
 	}
 	interfaceTypeRaw, err := os.ReadFile(typePath)
 	if err != nil {
-		fmt.Printf("Cannot read device type for device: %s\n", err)
+		slog.Debug("Cannot read device type for device", "devicePath", devicePath, "error", err)
 		return false
 	}
 	interfaceType, err := strconv.Atoi(strings.TrimSpace(string(interfaceTypeRaw)))
 	if err != nil {
-		fmt.Printf("Cannot parse device type for device: %v\n", err)
+		slog.Debug("Cannot parse device type for device", "devicePath", devicePath, "error", err)
 		return false
 	}
 	if !slices.Contains(allowedInterfaceTypes, interfaceType) {
-		fmt.Printf("Interface type <%d> is not allowed, must be on of %v\n", interfaceType, allowedInterfaceTypes)
+		slog.Debug("Interface type is not allowed", "interfaceType", interfaceType, "allowedTypes", allowedInterfaceTypes, "devicePath", devicePath)
 		return false
 	}
 	return true
@@ -36,10 +37,17 @@ func isInterfaceTypeValid(devicePath string) bool {
 
 func isInterfaceBonded(devicePath string) bool {
 	slaveStatePath := path.Join(devicePath, "bonding_slave/state")
+	if _, err := os.Stat(slaveStatePath); os.IsNotExist(err) {
+		slog.Debug("Device is not a bond slave, skipping", "devicePath", devicePath)
+		return false
+	} else if err != nil {
+		slog.Warn("Device slave status file cannot be accessed", "devicePath", devicePath, "error", err)
+		return false
+	}
+
 	_, err := os.ReadFile(slaveStatePath)
 	if err != nil {
-		fmt.Printf("Cannot read slave state for device: %s\n", err)
-		fmt.Printf("Device with path <%s> is not bond slave, skipping\n", devicePath)
+		slog.Warn("Cannot read device bond slave", "devicePath", devicePath, "error", err)
 		return false
 	}
 	return true
@@ -57,18 +65,19 @@ func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool) []s
 	for _, deviceDir := range allInterfaces {
 		deviceName := deviceDir.Name()
 		if deviceDir.Type().IsRegular() {
-			fmt.Printf("<%s> is not a valid device, skipping\n", deviceName)
+			slog.Debug("Not a valid device, skipping", "deviceName", deviceName)
 			continue
 		}
 
 		interfacePath := path.Join(netClassDirectory, deviceName)
 		if !isInterfaceTypeValid(interfacePath) {
-			fmt.Printf("<%s> is not a valid device, skipping\n", deviceName)
+			slog.Debug("Not a valid device type, skipping", "deviceName", deviceName)
 			continue
 		}
 
 		if detectOnlyBondedPorts {
 			if !isInterfaceBonded(interfacePath) {
+				slog.Debug("Not a bonded port, skipping", "deviceName", deviceName)
 				continue
 			}
 		}

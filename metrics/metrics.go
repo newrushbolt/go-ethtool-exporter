@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 	"reflect"
 	"slices"
@@ -53,7 +54,6 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 	// Handle simple types
 	default:
 		var metricValue float64
-		// slices.Reverse(prefixes)
 		metricLabels := make(map[string]string)
 		switch inputStructValue.Kind() {
 		case reflect.Float64:
@@ -109,8 +109,8 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 				metricValue = float64(1)
 			}
 		default:
-			// TODO: introduce common logger
-			fmt.Printf("Error: cannot format type <%s> as metric value\n", inputStructValue.Kind())
+			logMetricName := toSnakeCase(strings.Join(prefixes, "_"))
+			slog.Debug("Error: cannot format type as metric value", "kind", inputStructValue.Kind(), "metricName", logMetricName)
 			return
 		}
 		metricName := toSnakeCase(strings.Join(prefixes, "_"))
