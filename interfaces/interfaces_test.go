@@ -1,6 +1,7 @@
 package interfaces
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,4 +28,22 @@ func TestInterfacesBrokenPath(t *testing.T) {
 	allowedTypes := []int{1}
 
 	assert.Panics(t, func() { GetInterfacesList(stubNetClassPath, false, allowedTypes) })
+}
+
+func TestIsInterfaceBondedFilesystemErrors(t *testing.T) {
+	unreadableFiles := []string{
+		"interfaces_test/sys/class/net/unreadable_file",
+		"interfaces_test/sys/class/net/eth3/bonding_slave/state",
+	}
+	for _, file := range unreadableFiles {
+		os.Chmod(file, 0000) // Set permissions to unreadable
+		defer func(f string) {
+			t.Cleanup(func() {
+				os.Chmod(f, 0644) // Restore permissions after test
+			})
+		}(file)
+	}
+
+	assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file"))
+	assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/eth3"))
 }
