@@ -20,11 +20,7 @@ jobs:
       image: quay.io/prometheus/golang-builder:1.23-base
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - run: >-
-          go test ./...
-          -coverpkg=github.com/newrushbolt/go-ethtool-exporter/...
-          -coverprofile coverage.out
-          -covermode count
+      - run: go test ./... -coverprofile coverage.out
       - run: go tool cover -func coverage.out
       # TODO: set coverage threshold, eg https://github.com/lluuiissoo/go-testcoverage/blob/main/.github/workflows/ci.yml
 

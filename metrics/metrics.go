@@ -98,10 +98,11 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 				}
 				labelValuesString := strings.Join(labelValues, ",")
 				metricLabels[labelName] = labelValuesString
-				metricIndex := metricList.GetMetricIndex(metricName)
-				// if err != nil {
-				// 	fmt.Printf("Error: %+v\n", err)
-				// } else {
+				metricIndex, err := metricList.GetMetricIndex(metricName)
+				if err != nil {
+					slog.Error("Error getting metric index", "metricName", metricName, "error", err)
+					return
+				}
 				if metricIndex != -1 {
 					maps.Insert((*metricList)[metricIndex].Labels, maps.All(metricLabels))
 					return

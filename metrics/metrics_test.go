@@ -84,6 +84,19 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 	assert.Equal(t, expectedMetricResult, string(metricResult))
 }
 
+func TestMetricListFromStructsMetricIndexError(t *testing.T) {
+	type dummyStruct struct {
+		Info string
+	}
+	metricList := registry.Registry{
+		{Name: "dummy_info", Labels: map[string]string{"a": "1"}, Value: 1},
+		{Name: "dummy_info", Labels: map[string]string{"b": "2"}, Value: 2},
+	}
+	input := dummyStruct{Info: "test"}
+
+	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil)
+}
+
 // func TestRealIntelMetrics(t *testing.T) {
 
 // 	interfaces := map[string]string{
@@ -92,7 +105,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 
 // 	for _, interfacePath := range interfaces {
 // 		t.Run(interfacePath, func(t *testing.T) {
-// 			metricRegistry := registry.Registry{}
+// 			metricRegistry := registry{}
 
 // 			// statistics
 // 			metricType := "statistics"

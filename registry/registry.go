@@ -19,27 +19,28 @@ type MetricRecord struct {
 
 type Registry []MetricRecord
 
-func (metricRegistry *Registry) GetMetricIndex(metricName string) int {
+func (metricRegistry *Registry) GetMetricIndex(metricName string) (int, error) {
+	var err error
 	metricsFoundIndexes := []int{}
-	// var err error
 	for metricIndex, metricObject := range *metricRegistry {
 		if metricObject.Name == metricName {
 			metricsFoundIndexes = append(metricsFoundIndexes, metricIndex)
 		}
 	}
-	// TODO: WTF is this code? Why we need it?
-	// Skipping coverage check for now
-	// default:
-	// 	metricsFoundObjects := Registry{}
-	// 	for _, metricIndex := range metricsFoundIndexes {
-	// 		metricsFoundObjects = append(metricsFoundObjects, (*metricRegistry)[metricIndex])
-	// 	}
-	// 	err = fmt.Errorf("multiple metrics with the same name <%s> found: %+v", metricName, metricsFoundObjects)
-	// 	return -1, err
-	if len(metricsFoundIndexes) == 0 {
-		return -1
+
+	switch len(metricsFoundIndexes) {
+	case 0:
+		return -1, err
+	case 1:
+		return metricsFoundIndexes[0], err
+	default:
+		metricsFoundObjects := Registry{}
+		for _, metricIndex := range metricsFoundIndexes {
+			metricsFoundObjects = append(metricsFoundObjects, (*metricRegistry)[metricIndex])
+		}
+		err = fmt.Errorf("multiple metrics with the same name <%s> found: %+v", metricName, metricsFoundObjects)
+		return -1, err
 	}
-	return metricsFoundIndexes[0]
 }
 
 // TODO: actually implement function, return proper error

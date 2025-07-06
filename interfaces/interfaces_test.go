@@ -26,5 +26,5 @@ func TestInterfacesBrokenPath(t *testing.T) {
 	stubNetClassPath := "interfaces_test/sys/class/net2"
 	allowedTypes := []int{1}
 
-	assert.Panics(t, func() { GetInterfacesList(stubNetClassPath, false, allowedTypes) }, "Should panic without proper path")
+	assert.Panics(t, func() { GetInterfacesList(stubNetClassPath, false, allowedTypes) })
 }

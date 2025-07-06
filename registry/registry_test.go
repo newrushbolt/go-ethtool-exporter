@@ -12,7 +12,6 @@ import (
 func TestRegistrySimpleMetric(t *testing.T) {
 	expectedMetricResult := `test_metric{key1="value1"} 16.13
 `
-
 	var metricList Registry
 	metricRecordSimple := MetricRecord{
 		Name:   "test_metric",
@@ -69,8 +68,70 @@ func TestRegistryTooManyLabels(t *testing.T) {
 
 func TestRegistryBrokenPath(t *testing.T) {
 	var metricList Registry
-
 	textFilePath := fmt.Sprintf("/non-existed-root-dir/.TestRegistryData-%d.prom", time.Now().UnixNano())
 	assert.Panics(t, func() { metricList.MustWriteTextfile(textFilePath) })
 	defer os.Remove(textFilePath)
+}
+
+func TestFormatPrometheusLineNoLabels(t *testing.T) {
+	rec := MetricRecord{Name: "metricNoLabels", Labels: map[string]string{}, Value: 42}
+	line, err := rec.FormatPrometheusLine()
+	assert.NoError(t, err)
+	assert.Equal(t, "metricNoLabels{} 42\n", line)
+}
+
+func TestFormatPrometheusLineLabelSorting(t *testing.T) {
+	expectedSortedLine := `metricLabelSorting{a="1",b="2"} 1
+`
+	rec := MetricRecord{
+		Name:   "metricLabelSorting",
+		Labels: map[string]string{"b": "2", "a": "1"},
+		Value:  1,
+	}
+	line, err := rec.FormatPrometheusLine()
+
+	assert.NoError(t, err)
+	assert.Equal(t, line, expectedSortedLine)
+}
+
+func TestMustWriteTextfileWriteAtError(t *testing.T) {
+	var metricList Registry
+	metricList = append(metricList, MetricRecord{
+		Name:   "test_metric",
+		Labels: map[string]string{"key": "value"},
+		Value:  1,
+	})
+	dirPath := os.TempDir()
+	assert.Panics(t, func() { metricList.MustWriteTextfile(dirPath) })
+}
+
+func TestGetMetricIndex_NoMatch(t *testing.T) {
+	metricList := Registry{
+		{Name: "foo", Labels: nil, Value: 1},
+		{Name: "bar", Labels: nil, Value: 2},
+	}
+	idx, err := metricList.GetMetricIndex("baz")
+	assert.Equal(t, -1, idx)
+	assert.NoError(t, err)
+}
+
+func TestGetMetricIndex_OneMatch(t *testing.T) {
+	metricList := Registry{
+		{Name: "foo", Labels: nil, Value: 1},
+		{Name: "bar", Labels: nil, Value: 2},
+	}
+	idx, err := metricList.GetMetricIndex("foo")
+	assert.Equal(t, 0, idx)
+	assert.NoError(t, err)
+}
+
+func TestGetMetricIndex_MultipleMatches(t *testing.T) {
+	metricList := Registry{
+		{Name: "foo", Labels: nil, Value: 1},
+		{Name: "foo", Labels: nil, Value: 2},
+	}
+	idx, err := metricList.GetMetricIndex("foo")
+	assert.Equal(t, -1, idx)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "multiple metrics with the same name <foo>")
 }
