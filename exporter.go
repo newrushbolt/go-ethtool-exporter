@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 
@@ -38,7 +40,7 @@ var (
 	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
 
 	// Port detection settings
-	skipNonBondedPorts = kingpin.Flag("skip-non-bonded-ports", "").Default("true").Bool()
+	skipNonBondedPorts = kingpin.Flag("skip-non-bonded-ports", " ").Default("true").Bool()
 	// Not yet implemented
 	// skipBondMasterPorts = kingpin.Flag("skip-bond-master-ports", "").Bool()
 	// skipOvsSlavePorts   = kingpin.Flag("skip-ovs-slave-ports", "").Bool()
@@ -86,8 +88,25 @@ func parseAllowedInterfaceTypes(typesStr string) []int {
 	return types
 }
 
+func getVersion() string {
+	// Try to get version from git
+	cmd := exec.Command("git", "describe", "--tags", "--always", "--dirty")
+	out, err := cmd.Output()
+	if err == nil {
+		return strings.TrimSpace(string(out))
+	}
+	// Fallback to environment variable
+	if v := os.Getenv("GO_ETHOOL_EXPORTER_VERSION"); v != "" {
+		return v
+	}
+	// Fallback to current timestamp
+	return fmt.Sprint(time.Now().Unix())
+}
+
 func main() {
+	kingpin.Version(getVersion())
 	kingpin.Parse()
+
 	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts, allowedTypes)
 	for _, interfaceName := range interfaces {
