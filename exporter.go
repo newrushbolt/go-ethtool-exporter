@@ -119,8 +119,8 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 	return strings.Join(versionLines, "\n")
 }
 
-func collectAllMetrics() maps[string]registry.Registry {
-	allMetricRegistries := maps[string]registry.Registry{}
+func collectAllMetrics() map[string]registry.Registry {
+	allMetricRegistries := map[string]registry.Registry{}
 
 	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts, allowedTypes)
@@ -168,21 +168,16 @@ func collectAllMetrics() maps[string]registry.Registry {
 	return allMetricRegistries
 }
 
-// func writeAllMetricsToTextfiles() {
+func writeAllMetricsToTextfiles() {
+	metricRegistries := collectAllMetrics()
 
-// 	metricRegistries := collectAllMetrics()
-
-// 	for _, metricRegistry := range metricRegistries {
-// 		// Writing file in node_exporter textfile format
-// 		textFileName := fmt.Sprintf("%s.prom", metricRegistry.InterfaceName)
-// 		textFilePath := path.Join(*textfileDirectory, textFileName)
-// 		if err := metricRegistry.MustWriteTextfile(textFilePath); err != nil {
-// 			slog.Error("Failed to write metrics to textfile", "textFilePath", textFilePath, "error", err)
-// 		} else {
-// 			slog.Info("Metrics written to textfile", "textFilePath", textFilePath)
-// 		}
-// 	}
-// }
+	for interfaceName, metricRegistry := range metricRegistries {
+		// Writing file in node_exporter textfile format
+		textFileName := fmt.Sprintf("%s.prom", interfaceName)
+		textFilePath := path.Join(*textfileDirectory, textFileName)
+		metricRegistry.MustWriteTextfile(textFilePath)
+	}
+}
 
 func main() {
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
@@ -190,10 +185,5 @@ func main() {
 	// TODO: create custom kingpin template to display bool defaults
 
 	// Single textfile
-
-	// // Writing file in node_exporter textfile format
-	// // For now this is type of exporting is the only output option
-	// textFileName := fmt.Sprintf("%s.prom", interfaceName)
-	// textFilePath := path.Join(*textfileDirectory, textFileName)
-	// metricRegistry.MustWriteTextfile(textFilePath)
+	writeAllMetricsToTextfiles()
 }
