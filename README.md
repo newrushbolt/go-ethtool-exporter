@@ -9,13 +9,14 @@ Usage:
 usage: go-ethtool-exporter [<flags>] <command> [<args> ...]
 
 Flags:
-  --help                   Show context-sensitive help.
+  --help                                                    Show context-sensitive help.
+
   --ethtool-path=/usr/sbin/ethtool
 
   --linux-net-class-path=/sys/class/net
 
-  --textfile-directory="var/lib/node-exporter/textfiles"
-                                Path to node_exporter textfile directory. Only used in "single-textfile" and "loop-textfile" modes.
+  --textfile-directory="var/lib/node-exporter/textfiles"    Path to node_exporter textfile directory. Only used in "single-textfile" and "loop-textfile" modes.
+
   --[no-]collect-generic-info-settings
 
   --[no-]collect-module-info-diagnostics-alarms
@@ -31,9 +32,10 @@ Flags:
   --[no-]collect-module-info-vendor
 
   --[no-]skip-non-bonded-ports
-  --allowed-interface-types="1,"
-                                Comma-separated list of allowed interface types (see if_arp.h)
-  --version                Show application version.
+
+  --allowed-interface-types="1,"                            Comma-separated list of allowed interface types (see if_arp.h)
+
+  --version                                                 Show application version.
 
 Commands:
 
