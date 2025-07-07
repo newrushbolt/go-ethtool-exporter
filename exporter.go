@@ -50,7 +50,7 @@ var (
 	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
 
 	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
-	allowedInterfaceTypesStr = kingpin.Flag("allowed-interface-types", "Comma-separated list of allowed interface types (see if_arp.h)").Default("1").String()
+	allowedInterfaceTypesStr = kingpin.Flag("allowed-interface-types", "Comma-separated list of allowed interface types (see if_arp.h)").Default("1,").String()
 )
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string) string {
@@ -119,9 +119,8 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 	return strings.Join(versionLines, "\n")
 }
 
-func main() {
-	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
-	kingpin.Parse()
+func collectAllMetrics() maps[string]registry.Registry {
+	allMetricRegistries := maps[string]registry.Registry{}
 
 	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts, allowedTypes)
@@ -163,10 +162,38 @@ func main() {
 		statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
 		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
 
-		// Writing file in node_exporter textfile format
-		// For now this is type of exporting is the only output option
-		textFileName := fmt.Sprintf("%s.prom", interfaceName)
-		textFilePath := path.Join(*textfileDirectory, textFileName)
-		metricRegistry.MustWriteTextfile(textFilePath)
+		allMetricRegistries[interfaceName] = metricRegistry
 	}
+
+	return allMetricRegistries
+}
+
+// func writeAllMetricsToTextfiles() {
+
+// 	metricRegistries := collectAllMetrics()
+
+// 	for _, metricRegistry := range metricRegistries {
+// 		// Writing file in node_exporter textfile format
+// 		textFileName := fmt.Sprintf("%s.prom", metricRegistry.InterfaceName)
+// 		textFilePath := path.Join(*textfileDirectory, textFileName)
+// 		if err := metricRegistry.MustWriteTextfile(textFilePath); err != nil {
+// 			slog.Error("Failed to write metrics to textfile", "textFilePath", textFilePath, "error", err)
+// 		} else {
+// 			slog.Info("Metrics written to textfile", "textFilePath", textFilePath)
+// 		}
+// 	}
+// }
+
+func main() {
+	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
+	kingpin.Parse()
+	// TODO: create custom kingpin template to display bool defaults
+
+	// Single textfile
+
+	// // Writing file in node_exporter textfile format
+	// // For now this is type of exporting is the only output option
+	// textFileName := fmt.Sprintf("%s.prom", interfaceName)
+	// textFilePath := path.Join(*textfileDirectory, textFileName)
+	// metricRegistry.MustWriteTextfile(textFilePath)
 }
