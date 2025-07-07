@@ -43,7 +43,11 @@ func TestIsInterfaceBondedFilesystemErrors(t *testing.T) {
 			})
 		}(file)
 	}
+	t1 := isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file")
+	t2 := isInterfaceBonded("interfaces_test/sys/class/net/eth3")
 
-	assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file"))
-	assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/eth3"))
+	assert.False(t, t1)
+	assert.False(t, t2)
+	// assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file"))
+	// assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/eth3"))
 }
