@@ -89,15 +89,22 @@ func parseAllowedInterfaceTypes(typesStr string) []int {
 }
 
 func getVersion() string {
-	// Try to get version from git
-	cmd := exec.Command("git", "describe", "--tags", "--always", "--dirty")
-	out, err := cmd.Output()
-	if err == nil {
-		return strings.TrimSpace(string(out))
+	describeCmd := exec.Command("git", "describe", "--tags", "--always", "--dirty")
+	describeOutput, describeErr := describeCmd.Output()
+	branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	branchOutput, branchErr := branchCmd.Output()
+
+	describe := strings.TrimSpace(string(describeOutput))
+	branch := strings.TrimSpace(string(branchOutput))
+
+	if describeErr == nil && branchErr == nil && branch != "" && branch != "HEAD" {
+		return describe + "-" + branch
 	}
-	// Fallback to environment variable
-	if v := os.Getenv("GO_ETHOOL_EXPORTER_VERSION"); v != "" {
-		return v
+	if describeErr == nil {
+		return describe
+	}
+	if envVersion := os.Getenv("GO_ETHTOOL_EXPORTER_VERSION"); envVersion != "" {
+		return envVersion
 	}
 	// Fallback to current timestamp
 	return fmt.Sprint(time.Now().Unix())
