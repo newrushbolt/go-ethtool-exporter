@@ -70,7 +70,7 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 }
 
 func parseAllowedInterfaceTypes(typesStr string) []int {
-	var types []int
+	types := []int{}
 	for _, t := range strings.Split(typesStr, ",") {
 		t = strings.TrimSpace(t)
 		if t == "" {

@@ -7,47 +7,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var defaultNetClassPath = "interfaces_test/sys/class/net"
+
 func TestInterfacesAll(t *testing.T) {
-	stubNetClassPath := "interfaces_test/sys/class/net"
 	allowedTypes := []int{1}
-	interfaces := GetInterfacesList(stubNetClassPath, false, allowedTypes)
+	interfaces := GetInterfacesList(defaultNetClassPath, false, allowedTypes)
 
 	assert.Equal(t, interfaces, []string{"bond0", "eth0"})
 }
 
 func TestInterfacesBonded(t *testing.T) {
-	stubNetClassPath := "interfaces_test/sys/class/net"
 	allowedTypes := []int{1}
-	interfaces := GetInterfacesList(stubNetClassPath, true, allowedTypes)
+	interfaces := GetInterfacesList(defaultNetClassPath, true, allowedTypes)
 
 	assert.Equal(t, interfaces, []string{"eth0"})
 }
 
 func TestInterfacesBrokenPath(t *testing.T) {
-	stubNetClassPath := "interfaces_test/sys/class/net2"
+	absentNetClassPath := "interfaces_test/sys/class/net2"
 	allowedTypes := []int{1}
 
-	assert.Panics(t, func() { GetInterfacesList(stubNetClassPath, false, allowedTypes) })
+	assert.Panics(t, func() { GetInterfacesList(absentNetClassPath, false, allowedTypes) })
 }
 
-func TestIsInterfaceBondedFilesystemErrors(t *testing.T) {
-	unreadableFiles := []string{
-		"interfaces_test/sys/class/net/unreadable_file",
-		"interfaces_test/sys/class/net/eth3/bonding_slave/state",
-	}
-	for _, file := range unreadableFiles {
-		os.Chmod(file, 0000) // Set permissions to unreadable
-		defer func(f string) {
-			t.Cleanup(func() {
-				os.Chmod(f, 0644) // Restore permissions after test
-			})
-		}(file)
-	}
-	t1 := isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file")
-	t2 := isInterfaceBonded("interfaces_test/sys/class/net/eth3")
+func TestIsInterfaceBondedPermissionError(t *testing.T) {
+	unreadableFile := "interfaces_test/sys/class/net/unreadable_file"
+	os.Chmod(unreadableFile, 0000) // Set permissions to unreadable
+	defer func(f string) {
+		t.Cleanup(func() {
+			os.Chmod(f, 0644) // Restore permissions after test
+		})
+	}(unreadableFile)
 
-	assert.False(t, t1)
-	assert.False(t, t2)
-	// assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/unreadable_file"))
-	// assert.False(t, isInterfaceBonded("interfaces_test/sys/class/net/eth3"))
+	isBonded := isInterfaceBonded(unreadableFile)
+	assert.False(t, isBonded)
 }

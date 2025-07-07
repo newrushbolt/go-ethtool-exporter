@@ -92,6 +92,7 @@ func (registry *Registry) MustWriteTextfile(filePath string) {
 		}
 		_, err = tmpFile.WriteAt([]byte(metricString), writeIndex)
 		if err != nil {
+			// Hard to cover by unit tests, because it would require to brake\overflow the filesystem, or mock the os.File
 			slog.Error("Cannot write formated metric to file", "metric", metricString, "file", tmpFile.Name(), "error", err)
 			continue
 		}

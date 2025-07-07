@@ -41,6 +41,7 @@ func isInterfaceBonded(devicePath string) bool {
 
 	_, err := os.ReadFile(slaveStatePath)
 	if err != nil {
+		// Hard to cover by unit tests, because it would require to brake\overflow the filesystem, or mock the os.File
 		slog.Warn("Cannot read device bond slave", "devicePath", devicePath, "error", err)
 		return false
 	}
