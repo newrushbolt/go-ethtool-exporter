@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var defaultNetClassPath = "interfaces_test/sys/class/net"
+var defaultNetClassPath = "../testdata/interfaces/sys/class/net"
 
 func TestInterfacesAll(t *testing.T) {
 	allowedTypes := []int{1}
@@ -24,14 +24,14 @@ func TestInterfacesBonded(t *testing.T) {
 }
 
 func TestInterfacesBrokenPath(t *testing.T) {
-	absentNetClassPath := "interfaces_test/sys/class/net2"
+	absentNetClassPath := "../testdata/interfaces/sys/class/net2"
 	allowedTypes := []int{1}
 
 	assert.Panics(t, func() { GetInterfacesList(absentNetClassPath, false, allowedTypes) })
 }
 
 func TestIsInterfaceBondedPermissionError(t *testing.T) {
-	unreadableFile := "interfaces_test/sys/class/net/unreadable_file"
+	unreadableFile := "../testdata/interfaces/sys/class/net/unreadable_file"
 	os.Chmod(unreadableFile, 0000) // Set permissions to unreadable
 	defer func(f string) {
 		t.Cleanup(func() {

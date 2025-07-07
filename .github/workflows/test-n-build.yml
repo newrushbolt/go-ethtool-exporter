@@ -1,5 +1,5 @@
 ---
-name: Tests and builds
+name: Test and build
 on:
   push:
     branches:
@@ -7,19 +7,18 @@ on:
   pull_request:
 
 concurrency:
-  group: tests-n-builds
+  group: test-n-build
   cancel-in-progress: true
 
 env:
   GOOS: linux
+  COVERAGE_THRESHOLD: 85.9
 
 jobs:
   test:
     runs-on: ubuntu-24.04
     container:
       image: quay.io/prometheus/golang-builder:1.23-base
-    env:
-      COVERAGE_THRESHOLD: 85.9
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - run: go test ./... -coverprofile coverage.out
@@ -35,6 +34,7 @@ jobs:
                   echo "Current test coverage is below threshold"
                   exit 1
               fi
+
   build:
     runs-on: ubuntu-24.04
     needs: [test]

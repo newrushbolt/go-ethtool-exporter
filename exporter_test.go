@@ -25,7 +25,7 @@ func TestParseAllowedInterfaceTypes(t *testing.T) {
 }
 
 func TestReadEthtoolData(t *testing.T) {
-	stubPath := "./stub_ethtool.sh"
+	stubPath := "testdata/ethtool.sh"
 	// Make sure the stub is executable
 	os.Chmod(stubPath, 0755)
 
