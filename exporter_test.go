@@ -5,6 +5,7 @@ import (
 	"runtime/debug"
 	"testing"
 
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,4 +86,32 @@ func TestExporterVersionBuildInfoError(t *testing.T) {
 	expectedVersion := `go-ethtool-exporter version: unknown`
 	versionString := getExporterVersion(func() (*debug.BuildInfo, bool) { return nil, false })
 	assert.Equal(t, expectedVersion, versionString)
+}
+
+func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
+	expectedMetrics := `dummy_metric{foo="bar"} 42
+`
+	dir := t.TempDir()
+	textfileDirectory = &dir // override global pointer for test
+
+	eth0Registry := registry.Registry{
+		{
+			Name:   "dummy_metric",
+			Value:  42,
+			Labels: map[string]string{"foo": "bar"},
+		},
+	}
+	registries := map[string]registry.Registry{
+		"eth0": eth0Registry,
+	}
+
+	writeAllMetricsToTextfiles(registries)
+
+	filePath := dir + "/eth0.prom"
+	metrics, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("failed to read written file: %v", err)
+	}
+
+	assert.Equal(t, expectedMetrics, string(metrics))
 }

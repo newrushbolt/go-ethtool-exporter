@@ -182,7 +182,7 @@ func main() {
 	kingpin.Parse()
 	// TODO: create custom kingpin template to display bool defaults
 
-	// Single textfile
+	// Single textfile mode
 	metricRegistries := collectAllMetrics()
 	writeAllMetricsToTextfiles(metricRegistries)
 }
