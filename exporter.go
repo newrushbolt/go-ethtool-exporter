@@ -22,10 +22,15 @@ import (
 )
 
 var (
+	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons.")
+
+	// loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfile every \"loop-interval\".")
+	// loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfile updates.").Default("30s").Duration()
+
 	// TODO: add env support
 	ethtoolPath       = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
 	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
-	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory").Default("var/lib/node-exporter/textfiles").ExistingDir()
+	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory. Only used in \"single-textfile\" and \"loop-textfile\" modes.").Default("var/lib/node-exporter/textfiles").String()
 
 	// Collectors, enabled by default
 	collectGenericInfoSettings           = kingpin.Flag("collect-generic-info-settings", "").Default("true").Bool()
@@ -178,11 +183,19 @@ func writeAllMetricsToTextfiles(metricRegistries map[string]registry.Registry) {
 }
 
 func main() {
+	kingpin.UsageTemplate(kingpin.LongHelpTemplate)
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	kingpin.Parse()
 	// TODO: create custom kingpin template to display bool defaults
 
-	// Single textfile mode
-	metricRegistries := collectAllMetrics()
-	writeAllMetricsToTextfiles(metricRegistries)
+	caseVar := kingpin.Parse()
+	switch caseVar {
+	case singleTextfileCommand.FullCommand():
+		// Single textfile mode
+		metricRegistries := collectAllMetrics()
+		writeAllMetricsToTextfiles(metricRegistries)
+	default:
+		panicMessage := fmt.Sprintf("Unknown command: %s", caseVar)
+		panic(panicMessage)
+	}
 }
