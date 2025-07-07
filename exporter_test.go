@@ -2,10 +2,27 @@ package main
 
 import (
 	"os"
+	"runtime/debug"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func setBuildInfo(mainVersion, vcsRevision, vcsTime string) func() (*debug.BuildInfo, bool) {
+	return func() (*debug.BuildInfo, bool) {
+		settings := []debug.BuildSetting{}
+		if vcsRevision != "" {
+			settings = append(settings, debug.BuildSetting{Key: "vcs.revision", Value: vcsRevision})
+		}
+		if vcsTime != "" {
+			settings = append(settings, debug.BuildSetting{Key: "vcs.time", Value: vcsTime})
+		}
+		return &debug.BuildInfo{
+			Main:     debug.Module{Version: mainVersion},
+			Settings: settings,
+		}, true
+	}
+}
 
 func TestParseAllowedInterfaceTypes(t *testing.T) {
 	types := parseAllowedInterfaceTypes("1,2,3")
@@ -48,4 +65,24 @@ func TestReadEthtoolData(t *testing.T) {
 	// Unknown interface
 	out = readEthtoolData("unknown", "", stubPath)
 	assert.Equal(t, "", out)
+}
+
+func TestExporterVersionAllFields(t *testing.T) {
+	expectedVersion := `go-ethtool-exporter version: v1.2.3
+vcs.revision: abc123
+vcs.time: 2025-07-07T12:34:56Z`
+	versionString := getExporterVersion(setBuildInfo("v1.2.3", "abc123", "2025-07-07T12:34:56Z"))
+	assert.Equal(t, expectedVersion, versionString)
+}
+
+func TestExporterVersionNoFields(t *testing.T) {
+	expectedVersion := `go-ethtool-exporter version: unknown`
+	versionString := getExporterVersion(setBuildInfo("", "", ""))
+	assert.Equal(t, expectedVersion, versionString)
+}
+
+func TestExporterVersionBuildInfoError(t *testing.T) {
+	expectedVersion := `go-ethtool-exporter version: unknown`
+	versionString := getExporterVersion(func() (*debug.BuildInfo, bool) { return nil, false })
+	assert.Equal(t, expectedVersion, versionString)
 }

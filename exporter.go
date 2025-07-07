@@ -87,10 +87,10 @@ func parseAllowedInterfaceTypes(typesStr string) []int {
 	return types
 }
 
-func getExporterVersion() string {
-	buildInfo, ok := debug.ReadBuildInfo()
+func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
+	buildInfo, ok := readBuildInfo()
 	if !ok {
-		return "unknown"
+		return "go-ethtool-exporter version: unknown"
 	}
 
 	versionLines := []string{}
@@ -120,7 +120,7 @@ func getExporterVersion() string {
 }
 
 func main() {
-	kingpin.Version(getExporterVersion())
+	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	kingpin.Parse()
 
 	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
