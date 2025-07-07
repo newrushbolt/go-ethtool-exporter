@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"os/exec"
 	"path"
+	"runtime/debug"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 
@@ -88,30 +87,40 @@ func parseAllowedInterfaceTypes(typesStr string) []int {
 	return types
 }
 
-func getVersion() string {
-	describeCmd := exec.Command("git", "describe", "--tags", "--always", "--dirty")
-	describeOutput, describeErr := describeCmd.Output()
-	branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
-	branchOutput, branchErr := branchCmd.Output()
+func getExporterVersion() string {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
 
-	describe := strings.TrimSpace(string(describeOutput))
-	branch := strings.TrimSpace(string(branchOutput))
+	versionLines := []string{}
+	mainVersion := "unknown"
+	if buildInfo.Main.Version != "" {
+		mainVersion = buildInfo.Main.Version
+	}
+	versionLines = append(versionLines, fmt.Sprintf("go-ethtool-exporter version: %s", mainVersion))
 
-	if describeErr == nil && branchErr == nil && branch != "" && branch != "HEAD" {
-		return describe + "-" + branch
+	var vcsRevision, vcsTime string
+	for _, setting := range buildInfo.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			vcsRevision = setting.Value
+			if vcsRevision != "" {
+				versionLines = append(versionLines, fmt.Sprintf("vcs.revision: %s", vcsRevision))
+			}
+		case "vcs.time":
+			vcsTime = setting.Value
+			if vcsTime != "" {
+				versionLines = append(versionLines, fmt.Sprintf("vcs.time: %s", vcsTime))
+			}
+		}
 	}
-	if describeErr == nil {
-		return describe
-	}
-	if envVersion := os.Getenv("GO_ETHTOOL_EXPORTER_VERSION"); envVersion != "" {
-		return envVersion
-	}
-	// Fallback to current timestamp
-	return fmt.Sprint(time.Now().Unix())
+
+	return strings.Join(versionLines, "\n")
 }
 
 func main() {
-	kingpin.Version(getVersion())
+	kingpin.Version(getExporterVersion())
 	kingpin.Parse()
 
 	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
