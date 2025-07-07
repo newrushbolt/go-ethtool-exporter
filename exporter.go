@@ -168,9 +168,7 @@ func collectAllMetrics() map[string]registry.Registry {
 	return allMetricRegistries
 }
 
-func writeAllMetricsToTextfiles() {
-	metricRegistries := collectAllMetrics()
-
+func writeAllMetricsToTextfiles(metricRegistries map[string]registry.Registry) {
 	for interfaceName, metricRegistry := range metricRegistries {
 		// Writing file in node_exporter textfile format
 		textFileName := fmt.Sprintf("%s.prom", interfaceName)
@@ -185,5 +183,6 @@ func main() {
 	// TODO: create custom kingpin template to display bool defaults
 
 	// Single textfile
-	writeAllMetricsToTextfiles()
+	metricRegistries := collectAllMetrics()
+	writeAllMetricsToTextfiles(metricRegistries)
 }
