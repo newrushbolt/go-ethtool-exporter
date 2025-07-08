@@ -72,6 +72,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 			perQueueStatistics, isPerQueueStatistics := inputStruct.(statistics.PerQueueStatistics)
 			// We tried to keep type abstract as long as possible, but per-queue processing is so special,
 			// so we need a special branch for it
+			// TODO: find a better way?
 			if isPerQueueStatistics {
 				for queue := range inputStructValue.Len() {
 					queueMetrics := perQueueStatistics[queue]

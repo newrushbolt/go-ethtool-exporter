@@ -10,7 +10,17 @@ import (
 	"strings"
 )
 
+type PortDiscoveryOptions struct {
+	DiscoverAllPorts   bool
+	DiscoverBondSlaves bool
+	// TODO: filter out ovs ports by reading link, eg `/sys/class/net/tap2473528a-b1/master -> ../ovs-system`
+}
+
 func isInterfaceTypeValid(devicePath string, allowedInterfaceTypes []int) bool {
+	if len(allowedInterfaceTypes) == 0 {
+		slog.Debug("No allowed interface types specified, allowing all types", "devicePath", devicePath)
+		return true
+	}
 	typePath := path.Join(devicePath, "type")
 	interfaceTypeRaw, err := os.ReadFile(typePath)
 	if err != nil {
@@ -29,7 +39,7 @@ func isInterfaceTypeValid(devicePath string, allowedInterfaceTypes []int) bool {
 	return true
 }
 
-func isInterfaceBonded(devicePath string) bool {
+func isInterfaceBondSlave(devicePath string) bool {
 	slaveStatePath := path.Join(devicePath, "bonding_slave/state")
 	if _, err := os.Stat(slaveStatePath); os.IsNotExist(err) {
 		slog.Debug("Device is not a bond slave, skipping", "devicePath", devicePath)
@@ -48,7 +58,7 @@ func isInterfaceBonded(devicePath string) bool {
 	return true
 }
 
-func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool, allowedInterfaceTypes []int) []string {
+func GetInterfacesList(netClassDirectory string, portDetectionOptions PortDiscoveryOptions, allowedInterfaceTypes []int) []string {
 	resultInterfaces := []string{}
 
 	allInterfaces, err := os.ReadDir(netClassDirectory)
@@ -70,14 +80,20 @@ func GetInterfacesList(netClassDirectory string, detectOnlyBondedPorts bool, all
 			continue
 		}
 
-		if detectOnlyBondedPorts {
-			if !isInterfaceBonded(interfacePath) {
+		portShouldBeAdded := false
+		if portDetectionOptions.DiscoverAllPorts {
+			portShouldBeAdded = true
+		} else if portDetectionOptions.DiscoverBondSlaves {
+			if isInterfaceBondSlave(interfacePath) {
+				portShouldBeAdded = true
+			} else {
 				slog.Debug("Not a bonded port, skipping", "deviceName", deviceName)
-				continue
 			}
 		}
-		// TODO: filter out ovs ports by reading link, eg `/sys/class/net/tap2473528a-b1/master -> ../ovs-system`
-		resultInterfaces = append(resultInterfaces, deviceName)
+
+		if portShouldBeAdded {
+			resultInterfaces = append(resultInterfaces, deviceName)
+		}
 	}
 	return resultInterfaces
 }

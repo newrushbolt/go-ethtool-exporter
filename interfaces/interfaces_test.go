@@ -9,16 +9,35 @@ import (
 
 var defaultNetClassPath = "../testdata/interfaces/sys/class/net"
 
-func TestInterfacesAll(t *testing.T) {
+func TestInterfacesAllTypes(t *testing.T) {
+	allowedTypes := []int{}
+	discoverConfig := PortDiscoveryOptions{
+		DiscoverAllPorts:   true,
+		DiscoverBondSlaves: true,
+	}
+	interfaces := GetInterfacesList(defaultNetClassPath, discoverConfig, allowedTypes)
+
+	assert.Equal(t, interfaces, []string{"bond0", "eth0", "eth1", "eth2", "eth3"})
+}
+
+func TestInterfacesAllEthernet(t *testing.T) {
 	allowedTypes := []int{1}
-	interfaces := GetInterfacesList(defaultNetClassPath, false, allowedTypes)
+	discoverConfig := PortDiscoveryOptions{
+		DiscoverAllPorts:   true,
+		DiscoverBondSlaves: true,
+	}
+	interfaces := GetInterfacesList(defaultNetClassPath, discoverConfig, allowedTypes)
 
 	assert.Equal(t, interfaces, []string{"bond0", "eth0"})
 }
 
 func TestInterfacesBonded(t *testing.T) {
 	allowedTypes := []int{1}
-	interfaces := GetInterfacesList(defaultNetClassPath, true, allowedTypes)
+	discoverConfig := PortDiscoveryOptions{
+		DiscoverAllPorts:   false,
+		DiscoverBondSlaves: true,
+	}
+	interfaces := GetInterfacesList(defaultNetClassPath, discoverConfig, allowedTypes)
 
 	assert.Equal(t, interfaces, []string{"eth0"})
 }
@@ -26,8 +45,12 @@ func TestInterfacesBonded(t *testing.T) {
 func TestInterfacesBrokenPath(t *testing.T) {
 	absentNetClassPath := "../testdata/interfaces/sys/class/net2"
 	allowedTypes := []int{1}
+	discoverConfig := PortDiscoveryOptions{
+		DiscoverAllPorts:   false,
+		DiscoverBondSlaves: true,
+	}
 
-	assert.Panics(t, func() { GetInterfacesList(absentNetClassPath, false, allowedTypes) })
+	assert.Panics(t, func() { GetInterfacesList(absentNetClassPath, discoverConfig, allowedTypes) })
 }
 
 func TestIsInterfaceBondedPermissionError(t *testing.T) {
@@ -39,6 +62,6 @@ func TestIsInterfaceBondedPermissionError(t *testing.T) {
 		})
 	}(unreadableFile)
 
-	isBonded := isInterfaceBonded(unreadableFile)
+	isBonded := isInterfaceBondSlave(unreadableFile)
 	assert.False(t, isBonded)
 }

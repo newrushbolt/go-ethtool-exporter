@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"os/exec"
 	"path"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 
@@ -22,45 +24,25 @@ import (
 )
 
 var (
-	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons.")
-
-	// loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfile every \"loop-interval\".")
-	// loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfile updates.").Default("30s").Duration()
-
-	// TODO: add env support
-	ethtoolPath       = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
-	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
-	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory. Only used in \"single-textfile\" and \"loop-textfile\" modes.").Default("var/lib/node-exporter/textfiles").String()
-
-	// Collectors, enabled by default
-	collectGenericInfoSettings           = kingpin.Flag("collect-generic-info-settings", "").Default("true").Bool()
-	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
-	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
-
-	// Collectors, disabled by default
-	collectDriverInfoFeatures          = kingpin.Flag("collect-driver-info-features", "").Default("false").Bool()
-	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
-	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
-	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
-
-	// Port detection settings
-	skipNonBondedPorts = kingpin.Flag("skip-non-bonded-ports", " ").Default("true").Bool()
-	// Not yet implemented
-	// skipBondMasterPorts = kingpin.Flag("skip-bond-master-ports", "").Bool()
-	// skipOvsSlavePorts   = kingpin.Flag("skip-ovs-slave-ports", "").Bool()
-	// detectPortsBlackList  = kingpin.Flag("detect-ports-black-list", "").Default(".*").Regexp()
-	// Detect aliases and naming types?
-
-	// Absent metrics settings
-	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
-
-	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
-	allowedInterfaceTypesStr = kingpin.Flag("allowed-interface-types", "Comma-separated list of allowed interface types (see if_arp.h)").Default("1,").String()
+	// Logger settings
+	ExporterLogger *slog.Logger
+	// logLevel       = kingpin.Flag("log-level", "Set log level: debug, info, warn, error").Default("info").String()
 )
+
+func initLogger() {
+	var level slog.Level
+	envLevel := os.Getenv("GO_ETHTOOL_EXPORTER_LOG_LEVEL")
+	err := level.UnmarshalText([]byte(envLevel))
+	if err != nil {
+		level = slog.LevelInfo
+	}
+	ExporterLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+}
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string) string {
 	var ethtoolOutputRaw []byte
 	var err error
+	// TODO: add timeout support
 	if ethtoolMode == "" {
 		ethtoolOutputRaw, err = exec.Command(ethtoolPath, interfaceName).Output()
 	} else {
@@ -68,7 +50,7 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 	}
 
 	if err != nil {
-		slog.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "interfaceName", interfaceName, "error", err)
+		ExporterLogger.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
 		return ""
 	}
 	ethtoolOutput := string(ethtoolOutputRaw)
@@ -77,17 +59,17 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 
 func parseAllowedInterfaceTypes(typesStr string) []int {
 	types := []int{}
-	for _, t := range strings.Split(typesStr, ",") {
-		t = strings.TrimSpace(t)
-		if t == "" {
+	for _, rawType := range strings.Split(typesStr, ",") {
+		strType := strings.TrimSpace(rawType)
+		if strType == "" {
 			continue
 		}
-		v, err := strconv.Atoi(t)
+		intType, err := strconv.Atoi(strType)
 		if err != nil {
-			slog.Error("Invalid interface type in allowed-interface-types", "allowed-interface-types", typesStr, "interface-type", t, "error", err)
+			ExporterLogger.Error("Invalid interface type in allowed-interface-types, must be comma separated", "allowed-interface-types", typesStr, "interface-type", strType, "error", err)
 			continue
 		}
-		types = append(types, v)
+		types = append(types, intType)
 	}
 	return types
 }
@@ -127,30 +109,47 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 func collectAllMetrics() map[string]registry.Registry {
 	allMetricRegistries := map[string]registry.Registry{}
 
-	allowedTypes := parseAllowedInterfaceTypes(*allowedInterfaceTypesStr)
-	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, *skipNonBondedPorts, allowedTypes)
+	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
+	discoverConfig := interfaces.PortDiscoveryOptions{
+		DiscoverAllPorts:   *discoverAllPorts,
+		DiscoverBondSlaves: *discoverBondSlaves,
+	}
+	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
+
+	ExporterLogger.Debug("Discovered following interfaces, collecting metrics for them", "interfaces", interfaces)
+	// TODO: allow parallel gather
 	for _, interfaceName := range interfaces {
 		var metricRegistry registry.Registry
+		interfaceLogger := ExporterLogger.With("interfaceName", interfaceName)
 
 		// generic_info
+		interfaceLogger.Debug("generic_info: collecting metrics")
 		genericinfoConfig := generic_info.CollectConfig{
 			CollectAdvertisedSettings: *collectGenericInfoModes,
 			CollectSupportedSettings:  *collectGenericInfoModes,
 			CollectSettings:           *collectGenericInfoSettings,
 		}
 		genericInfoDataRaw := readEthtoolData(interfaceName, "", *ethtoolPath)
+		interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
 		genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &genericinfoConfig)
+		before := len(metricRegistry)
 		metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, map[string]string{})
+		interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
 
 		// driver_info
+		interfaceLogger.Debug("driver_info: collecting metrics")
 		driverInfoConfig := driver_info.CollectConfig{
 			DriverFeatures: *collectDriverInfoFeatures,
 		}
 		driverInfoDataRaw := readEthtoolData(interfaceName, "-i", *ethtoolPath)
+		interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
 		driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
+		before = len(metricRegistry)
 		metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{})
+		interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
 
 		// module_info
+		interfaceLogger.Debug("module_info: collecting metrics")
 		moduleInfoConfig := module_info.CollectConfig{
 			CollectDiagnosticsAlarms:   *collectModuleInfoDiagnosticsAlarms,
 			CollectDiagnosticsWarnings: *collectModuleInfoDiagnosticsWarnings,
@@ -158,15 +157,23 @@ func collectAllMetrics() map[string]registry.Registry {
 			CollectVendor:              *collectModuleInfoVendor,
 		}
 		moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", *ethtoolPath)
+		interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
 		moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &moduleInfoConfig)
+		before = len(metricRegistry)
 		metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, map[string]string{})
+		interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
 
 		// statistics
+		interfaceLogger.Debug("statistics: collecting metrics")
 		statisticsConfig := statistics.CollectConfig{}.Default()
 		statisticsDataRaw := readEthtoolData(interfaceName, "-S", *ethtoolPath)
+		interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
 		statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
+		before = len(metricRegistry)
 		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
+		interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
 
+		interfaceLogger.Debug("Total metric count", "metricCount", len(metricRegistry))
 		allMetricRegistries[interfaceName] = metricRegistry
 	}
 
@@ -182,20 +189,51 @@ func writeAllMetricsToTextfiles(metricRegistries map[string]registry.Registry) {
 	}
 }
 
-func main() {
-	kingpin.UsageTemplate(kingpin.LongHelpTemplate)
-	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
-	kingpin.Parse()
-	// TODO: create custom kingpin template to display bool defaults
+func MustDirectoryExist(dirPath *string) {
+	panicMessage := fmt.Sprintf("Directory <%s> does not exist", *textfileDirectory)
+	info, err := os.Stat(*dirPath)
+	if err != nil {
+		panic(panicMessage)
+	}
+	if !info.IsDir() {
+		panic(panicMessage)
+	}
+}
 
-	caseVar := kingpin.Parse()
-	switch caseVar {
-	case singleTextfileCommand.FullCommand():
-		// Single textfile mode
+func init() {
+	initLogger()
+}
+
+func runSingleTextfileCommand() {
+	// Single textfile mode
+	MustDirectoryExist(textfileDirectory)
+	metricRegistries := collectAllMetrics()
+	writeAllMetricsToTextfiles(metricRegistries)
+}
+
+func runLoopTextfileCommand() {
+	// Loop textfile mode
+	MustDirectoryExist(textfileDirectory)
+	for {
 		metricRegistries := collectAllMetrics()
 		writeAllMetricsToTextfiles(metricRegistries)
+		time.Sleep(*loopTextfileUpdateInterval)
+	}
+}
+
+func main() {
+	ExporterLogger.Info("Starting go-ethtool-exporter")
+	kingpin.UsageTemplate(kingpin.LongHelpTemplate)
+	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
+	exporterCommand := kingpin.Parse()
+
+	switch exporterCommand {
+	case singleTextfileCommand.FullCommand():
+		runSingleTextfileCommand()
+	case loopTextfileCommand.FullCommand():
+		runLoopTextfileCommand()
 	default:
-		panicMessage := fmt.Sprintf("Unknown command: %s", caseVar)
+		panicMessage := fmt.Sprintf("Unknown command: %s", exporterCommand)
 		panic(panicMessage)
 	}
 }

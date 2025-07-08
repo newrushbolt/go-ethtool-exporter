@@ -26,20 +26,20 @@ func setBuildInfo(mainVersion, vcsRevision, vcsTime string) func() (*debug.Build
 }
 
 func TestParseAllowedInterfaceTypes(t *testing.T) {
-	types := parseAllowedInterfaceTypes("1,2,3")
-	assert.Equal(t, []int{1, 2, 3}, types)
+	typesNormal := parseAllowedInterfaceTypes("1,2,3")
+	assert.Equal(t, []int{1, 2, 3}, typesNormal)
 
-	types = parseAllowedInterfaceTypes(" 1 , 2 , 3 ")
-	assert.Equal(t, []int{1, 2, 3}, types)
+	typesSpaced := parseAllowedInterfaceTypes(" 1 , 2 , 3 ")
+	assert.Equal(t, []int{1, 2, 3}, typesSpaced)
 
-	types = parseAllowedInterfaceTypes("")
-	assert.Equal(t, types, []int{})
+	typesEmpty := parseAllowedInterfaceTypes("")
+	assert.Equal(t, []int{}, typesEmpty)
 
-	types = parseAllowedInterfaceTypes(",,,")
-	assert.Equal(t, types, []int{})
+	typesEmptyWithCommas := parseAllowedInterfaceTypes(",,,")
+	assert.Equal(t, []int{}, typesEmptyWithCommas)
 
-	types = parseAllowedInterfaceTypes("1,foo,2")
-	assert.Equal(t, []int{1, 2}, types)
+	typesWithWord := parseAllowedInterfaceTypes("1,fuu,2")
+	assert.Equal(t, []int{1, 2}, typesWithWord)
 }
 
 func TestReadEthtoolData(t *testing.T) {
@@ -114,4 +114,15 @@ func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
 	}
 
 	assert.Equal(t, expectedMetrics, string(metrics))
+}
+
+func TestExporterDirectoryMustExist(t *testing.T) {
+	existingDir := "testdata/interfaces/"
+	assert.NotPanics(t, func() { MustDirectoryExist(&existingDir) })
+
+	nonExistentDir := "testdata/interfaces2/"
+	assert.Panics(t, func() { MustDirectoryExist(&nonExistentDir) })
+
+	notDir := "testdata/interfaces/sys/class/net/broken_interface"
+	assert.Panics(t, func() { MustDirectoryExist(&notDir) })
 }
