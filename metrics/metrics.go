@@ -36,10 +36,12 @@ func toSnakeCase(inputString string) string {
 }
 
 func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string) {
+	// TODO: add counters for all kind of metric events: parsed structures, parsed floats, parsed nils, parse errors, etc
 	inputStructValue := reflect.ValueOf(inputStruct)
 	switch inputStructValue.Kind() {
 	// Handle pointers
 	case reflect.Ptr:
+		// TODO: Handle absent metrics logic due to flags
 		if !inputStructValue.IsNil() {
 			newPrefixes := slices.Clone(prefixes)
 			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels)

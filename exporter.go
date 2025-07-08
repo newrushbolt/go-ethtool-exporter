@@ -201,6 +201,7 @@ func MustDirectoryExist(dirPath *string) {
 }
 
 func init() {
+	// Moved to separate `init()` in order to work both in exporter and tests
 	initLogger()
 }
 
@@ -217,6 +218,7 @@ func runLoopTextfileCommand() {
 	for {
 		metricRegistries := collectAllMetrics()
 		writeAllMetricsToTextfiles(metricRegistries)
+		// TODO: Add cleanup logic for ald metrics textfiles?
 		time.Sleep(*loopTextfileUpdateInterval)
 	}
 }

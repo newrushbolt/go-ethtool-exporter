@@ -8,8 +8,8 @@ import (
 var (
 	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons.")
 
-	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfile every loop-interval.")
-	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfile updates.").Default("30s").Duration()
+	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfiles every loop-interval.")
+	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfiles updates.").Default("30s").Duration()
 
 	// TODO: add env support???
 	ethtoolPath       = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
@@ -30,16 +30,17 @@ var (
 	// Port detection settings
 	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
 	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to \"\" to allow all port types.").Default("1,").String()
-	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Discover all ports, ignoring all the others discover flags, EXCEPT for 'discover-allowed-port-types'.").Default("false").Bool()
+	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.").Default("false").Bool()
 	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "").Default("true").Bool()
+	// discoverPortsRegex       = kingpin.Flag("discover-ports-regex", "Regex to filter all discovered ports.").Default(".*").Regexp()
 	// Not yet implemented
 	// discoverOvsSlaves
 	// discoverBondMasters
 
-	// detectPortsBlackList  = kingpin.Flag("detect-ports-black-list", "").Default(".*").Regexp()
 	// Detect aliases and naming types?
 
-	// Absent metrics settings
+	// Absent metrics (*float64 nil) behavior
+	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
 	// Maybe they should be per-module?
 	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
 )
