@@ -1,0 +1,46 @@
+package main
+
+import (
+	"github.com/alecthomas/kingpin/v2"
+)
+
+// TODO: Should create custom `--help` renderer, being able to group flags and correctly show default values
+var (
+	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons.")
+
+	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfiles every loop-interval.")
+	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfiles updates.").Default("30s").Duration()
+
+	// TODO: add env support???
+	ethtoolPath       = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
+	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
+	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory. Only used in \"single-textfile\" and \"loop-textfile\" modes.").Default("/var/lib/node-exporter/textfiles").String()
+
+	// Collectors, enabled by default
+	collectGenericInfoSettings           = kingpin.Flag("collect-generic-info-settings", "").Default("true").Bool()
+	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
+	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
+
+	// Collectors, disabled by default
+	collectDriverInfoFeatures          = kingpin.Flag("collect-driver-info-features", "").Default("false").Bool()
+	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
+	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
+	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
+
+	// Port detection settings
+	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
+	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to \"\" to allow all port types.").Default("1,").String()
+	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.").Default("false").Bool()
+	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "").Default("true").Bool()
+	// discoverPortsRegex       = kingpin.Flag("discover-ports-regex", "Regex to filter all discovered ports.").Default(".*").Regexp()
+	// Not yet implemented
+	// discoverOvsSlaves
+	// discoverBondMasters
+
+	// Detect aliases and naming types?
+
+	// Absent metrics (*float64 nil) behavior
+	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
+	// Maybe they should be per-module?
+	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
+)
