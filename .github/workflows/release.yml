@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: write
@@ -13,6 +15,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-22.04
+    if: github.ref_name == 'main'
     steps:
       - uses: googleapis/release-please-action@db8f2c60ee802b3748b512940dde88eabd7b7e01 # v3.7.13
         with:
@@ -20,7 +23,6 @@ jobs:
           package-name: go-ethtool-exporter
 
   create-github-release:
-    needs: release-please
     runs-on: ubuntu-22.04
     if: github.ref_type == 'tag'
     steps:
