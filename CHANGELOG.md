@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.6](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.5...v0.0.6) (2025-07-10)
+
+
+### Bug Fixes
+
+* better nil handling ([4831874](https://github.com/newrushbolt/go-ethtool-exporter/commit/4831874d5d34490cee24f1b9bf334a21c9be4af2))
+* dont double-build on main ([c8f16e7](https://github.com/newrushbolt/go-ethtool-exporter/commit/c8f16e7d554bd205bd7f1fa36fdfc8986d642a98))
+* revert to global logger ([f81ce72](https://github.com/newrushbolt/go-ethtool-exporter/commit/f81ce721577129071dbfad024aa12448db5a95c0))
+
 ## [0.0.5](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.1...v0.0.5) (2025-07-10)
 
 
