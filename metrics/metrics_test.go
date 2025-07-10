@@ -12,6 +12,75 @@ import (
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )
 
+func getMetricRegistryResult(metricList *registry.Registry) string {
+	textFilePath := fmt.Sprintf("../.TestAbstractData-%d.prom", time.Now().Unix())
+	metricList.MustWriteTextfile(textFilePath)
+	defer os.Remove(textFilePath)
+	metricResult, err := os.ReadFile(textFilePath)
+	if err != nil {
+		panic(err)
+	}
+	return string(metricResult)
+}
+
+func TestDropAllNils(t *testing.T) {
+	expectedMetricResult := `prefix_real_float64{} 16.13
+`
+
+	type NilStruct struct {
+		Key   string
+		Value string
+	}
+
+	type TestStruct struct {
+		RealFloat64 *float64
+		NilFloat64  *float64
+		NilString   *string
+		NilStruct   *NilStruct
+	}
+
+	nilObject := &TestStruct{}
+	realFloat64 := 16.13
+	nilObject.RealFloat64 = &realFloat64
+
+	metricRegistry := registry.Registry{}
+	prefixes := []string{"prefix"}
+	labels := map[string]string{}
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, false)
+
+	metricRegistryResult := getMetricRegistryResult(&metricRegistry)
+	assert.Equal(t, expectedMetricResult, metricRegistryResult)
+}
+
+func TestKeepFloat64Nils(t *testing.T) {
+	expectedMetricResult := `prefix_real_float64{} 16.13
+prefix_nil_float64{} NaN
+`
+	type NilStruct struct {
+		Key   string
+		Value string
+	}
+
+	type TestStruct struct {
+		RealFloat64 *float64
+		NilFloat64  *float64
+		NilString   *string
+		NilStruct   *NilStruct
+	}
+
+	nilObject := &TestStruct{}
+	realFloat64 := 16.13
+	nilObject.RealFloat64 = &realFloat64
+
+	metricRegistry := registry.Registry{}
+	prefixes := []string{"prefix"}
+	labels := map[string]string{}
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, true)
+
+	metricRegistryResult := getMetricRegistryResult(&metricRegistry)
+	assert.Equal(t, expectedMetricResult, metricRegistryResult)
+}
+
 func TestAllDataTypes(t *testing.T) {
 	expectedMetricResult := `prefprefix_driver_info_info{DriverName="test_driver",FirmwareVersionParts="version_p1,version_p2",device="test_device"} 1
 prefprefix_driver_info_supported_feature_whatever{device="test_device"} 1
@@ -71,7 +140,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 	labels := map[string]string{
 		"device": "test_device",
 	}
-	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels)
+	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, false)
 
 	textFilePath := fmt.Sprintf("../.TestAbstractData-%d.prom", time.Now().Unix())
 	metricRegistry.MustWriteTextfile(textFilePath)
@@ -80,8 +149,8 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 	if err != nil {
 		panic(err)
 	}
-
-	assert.Equal(t, expectedMetricResult, string(metricResult))
+	metricResultString := string(metricResult)
+	assert.Equal(t, expectedMetricResult, metricResultString)
 }
 
 func TestMetricListFromStructsMetricIndexError(t *testing.T) {
@@ -94,7 +163,7 @@ func TestMetricListFromStructsMetricIndexError(t *testing.T) {
 	}
 	input := dummyStruct{Info: "test"}
 
-	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil)
+	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, false)
 }
 
 // func TestRealIntelMetrics(t *testing.T) {
