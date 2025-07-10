@@ -42,5 +42,5 @@ var (
 	// Absent metrics (*float64 nil) behavior
 	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
 	// Maybe they should be per-module?
-	// keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "").Default("false").Bool()
+	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set `Nan` for every metric that wasn't found").Default("false").Bool()
 )

@@ -13,22 +13,25 @@ Flags:
 
   --ethtool-path=/usr/sbin/ethtool
   --linux-net-class-path=/sys/class/net
-
   --textfile-directory="/var/lib/node-exporter/textfiles"
                             Path to node_exporter textfile directory.
                             Only used in "single-textfile" and "loop-textfile" modes.
 
-  // Enabled by default
+  --keep-absent-metrics
+                            Set `Nan` for every metric that wasn't found
+
+  // Enabled collectors
   --no-collect-generic-info-settings
   --no-collect-module-info-diagnostics-alarms
   --no-collect-module-info-diagnostics-warnings
 
-  // Disabled by default
+  // Disabled collectors
   --collect-module-info-diagnostics-values
   --collect-driver-info-features
   --collect-generic-info-modes
   --collect-module-info-vendor
 
+  // Port discovery options
   --discover-allowed-port-types="1,"
                             Comma-separated list of allowed interface types (see if_arp.h).
                             Set to "" to allow all port types.
@@ -36,6 +39,7 @@ Flags:
                             Discover all ports, ignoring all the other discover flags,
                             EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
   --[no-]discover-bond-slaves
+
 
 Commands:
 

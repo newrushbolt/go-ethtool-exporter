@@ -133,7 +133,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
 		genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &genericinfoConfig)
 		before := len(metricRegistry)
-		metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, map[string]string{})
+		metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, map[string]string{}, *keepAbsentMetrics)
 		interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
 
 		// driver_info
@@ -145,7 +145,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
 		driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
 		before = len(metricRegistry)
-		metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{})
+		metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{}, *keepAbsentMetrics)
 		interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
 
 		// module_info
@@ -160,7 +160,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
 		moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &moduleInfoConfig)
 		before = len(metricRegistry)
-		metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, map[string]string{})
+		metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, map[string]string{}, *keepAbsentMetrics)
 		interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
 
 		// statistics
@@ -170,7 +170,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
 		statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
 		before = len(metricRegistry)
-		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
+		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{}, *keepAbsentMetrics)
 		interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
 
 		interfaceLogger.Debug("Total metric count", "metricCount", len(metricRegistry))

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"math"
 	"reflect"
 	"slices"
 	"strings"
@@ -35,7 +36,7 @@ func toSnakeCase(inputString string) string {
 	return strings.ToLower(inputString)
 }
 
-func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string) {
+func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, keepAbsentMetrics bool) {
 	// TODO: add counters for all kind of metric events: parsed structures, parsed floats, parsed nils, parse errors, etc
 	inputStructValue := reflect.ValueOf(inputStruct)
 	switch inputStructValue.Kind() {
@@ -44,14 +45,31 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		// TODO: Handle absent metrics logic due to flags
 		if !inputStructValue.IsNil() {
 			newPrefixes := slices.Clone(prefixes)
-			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels)
+			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics)
+		} else {
+			if !keepAbsentMetrics {
+				slog.Debug("Skipping nil pointer because keepAbsentMetrics=false", "prefixes", prefixes)
+				return
+			}
+			inputType := reflect.TypeOf(inputStruct)
+			if inputType == reflect.TypeOf((*float64)(nil)) {
+				if keepAbsentMetrics {
+					slog.Debug("Adding `Nan` for missing float64 metric", "prefixes", prefixes)
+					newPrefixes := slices.Clone(prefixes)
+					nanValue := math.NaN()
+					MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, keepAbsentMetrics)
+				}
+			} else {
+				slog.Debug("Skipping nil pointer, keeping nils only supporter for float64", "prefixes", prefixes, "type", inputType)
+			}
 		}
 	// Handle structs
 	case reflect.Struct:
+
 		for structFieldIndex := range inputStructValue.NumField() {
 			field := inputStructValue.Type().Field(structFieldIndex)
 			newPrefixes := append(prefixes, []string{field.Name}...)
-			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels)
+			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics)
 		}
 	// Handle simple types
 	default:
@@ -82,7 +100,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 					labels := map[string]string{
 						"queue": fmt.Sprintf("%d", queue),
 					}
-					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels)
+					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels, keepAbsentMetrics)
 				}
 				// Do not add metric for subspace itself
 				return
@@ -106,6 +124,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 					slog.Error("Error getting metric index", "metricName", metricName, "error", err)
 					return
 				}
+				// TODO: explain this branch
 				if metricIndex != -1 {
 					maps.Insert((*metricList)[metricIndex].Labels, maps.All(metricLabels))
 					return
@@ -117,6 +136,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 			slog.Debug("Error: cannot format type as metric value", "kind", inputStructValue.Kind(), "metricName", logMetricName)
 			return
 		}
+
 		metricName := toSnakeCase(strings.Join(prefixes, "_"))
 		finalLabels := map[string]string{}
 		maps.Insert(finalLabels, maps.All(metricLabels))
