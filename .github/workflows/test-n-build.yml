@@ -20,11 +20,14 @@ jobs:
     container:
       image: quay.io/prometheus/golang-builder:1.23-base
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - run: go test ./... -coverprofile coverage.out
-      - run: go tool cover -func coverage.out
+      - uses: actions/checkout@v4.2.2
+      - name: Run tests
+        run: go test ./... -coverprofile coverage.out
+      - name: Show coverage report per-function
+        run: go tool cover -func coverage.out
       # TODO: set coverage threshold, eg https://github.com/lluuiissoo/go-testcoverage/blob/main/.github/workflows/ci.yml
-      - run: |
+      - name: Check total coverage threshold
+        run: |
               echo "Coverage threshold: $COVERAGE_THRESHOLD %"
               totalCoverage=`go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
               echo "Current test coverage: $totalCoverage %"
@@ -46,11 +49,12 @@ jobs:
     env:
       GOARCH: ${{ matrix.GOARCH }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - run: go build -o "builds/go-ethtool-exporter-${GOARCH}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4.2.2
+      - name: Build binary
+        run: go build -o "go-ethtool-exporter-${GOARCH}"
+      - uses: actions/upload-artifact@v4.6.2
         with:
           if-no-files-found: error
           # Env-variables don't really work in "actions/upload-artifact", thats why we use pipeline-level templating
           name: "go-ethtool-exporter-${{ matrix.GOARCH }}"
-          path: "builds/go-ethtool-exporter-${{ matrix.GOARCH }}"
+          path: "go-ethtool-exporter-${{ matrix.GOARCH }}"
