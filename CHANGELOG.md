@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.1...v0.0.5) (2025-07-10)
+
+
+### Bug Fixes
+
+* release binaries v2 ([1c613c8](https://github.com/newrushbolt/go-ethtool-exporter/commit/1c613c8b57ee373d65d31430570f44cbaaf18e2a))
+
 ## [0.0.1](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.1...v0.0.1) (2025-07-09)
 
 
