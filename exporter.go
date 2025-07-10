@@ -23,12 +23,6 @@ import (
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )
 
-var (
-	// Logger settings
-	ExporterLogger *slog.Logger
-	// logLevel       = kingpin.Flag("log-level", "Set log level: debug, info, warn, error").Default("info").String()
-)
-
 func initLogger() {
 	var level slog.Level
 	envLevel := os.Getenv("GO_ETHTOOL_EXPORTER_LOG_LEVEL")
@@ -36,7 +30,7 @@ func initLogger() {
 	if err != nil {
 		level = slog.LevelInfo
 	}
-	ExporterLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+	slog.SetLogLoggerLevel(level)
 }
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string) string {
@@ -50,7 +44,7 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 	}
 
 	if err != nil {
-		ExporterLogger.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
+		slog.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
 		return ""
 	}
 	ethtoolOutput := string(ethtoolOutputRaw)
@@ -66,7 +60,7 @@ func parseAllowedInterfaceTypes(typesStr string) []int {
 		}
 		intType, err := strconv.Atoi(strType)
 		if err != nil {
-			ExporterLogger.Error("Invalid interface type in allowed-interface-types, must be comma separated", "allowed-interface-types", typesStr, "interface-type", strType, "error", err)
+			slog.Error("Invalid interface type in allowed-interface-types, must be comma separated", "allowed-interface-types", typesStr, "interface-type", strType, "error", err)
 			continue
 		}
 		types = append(types, intType)
@@ -116,11 +110,11 @@ func collectAllMetrics() map[string]registry.Registry {
 	}
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
 
-	ExporterLogger.Debug("Discovered following interfaces, collecting metrics for them", "interfaces", interfaces)
+	slog.Debug("Discovered following interfaces, collecting metrics for them", "interfaces", interfaces)
 	// TODO: allow parallel gather
 	for _, interfaceName := range interfaces {
 		var metricRegistry registry.Registry
-		interfaceLogger := ExporterLogger.With("interfaceName", interfaceName)
+		interfaceLogger := slog.With("interfaceName", interfaceName)
 
 		// generic_info
 		interfaceLogger.Debug("generic_info: collecting metrics")
@@ -224,7 +218,7 @@ func runLoopTextfileCommand() {
 }
 
 func main() {
-	ExporterLogger.Info("Starting go-ethtool-exporter")
+	slog.Info("Starting go-ethtool-exporter")
 	kingpin.UsageTemplate(kingpin.LongHelpTemplate)
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	exporterCommand := kingpin.Parse()
