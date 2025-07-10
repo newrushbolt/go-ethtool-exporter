@@ -16,6 +16,10 @@ env:
 
 jobs:
   test:
+    # Release-please causes us to have two commits in the main branch.
+    # We don't want to run tests on second (release) commit.
+    if: |
+      !contains(github.event.head_commit.message, '(main): release')
     runs-on: ubuntu-24.04
     container:
       image: quay.io/prometheus/golang-builder:1.23-base
