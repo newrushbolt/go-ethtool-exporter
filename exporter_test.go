@@ -98,8 +98,8 @@ func TestExporterVersionBuildInfoError(t *testing.T) {
 }
 
 func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
-	expectedMetrics := `dummy_metric{foo="bar"} 42
-`
+	expectedMetrics := `
+dummy_metric{foo="bar"} 42`
 	dir := t.TempDir()
 	textfileDirectory = &dir // override global pointer for test
 
@@ -116,7 +116,7 @@ func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
 
 	writeAllMetricsToTextfiles(registries)
 
-	filePath := dir + "/eth0.prom"
+	filePath := dir + "/ethtool_exporter.prom"
 	metrics, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("failed to read written file: %v", err)

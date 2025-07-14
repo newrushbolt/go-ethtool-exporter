@@ -10,8 +10,7 @@ import (
 )
 
 func TestRegistrySimpleMetric(t *testing.T) {
-	expectedMetricResult := `test_metric{key1="value1"} 16.13
-`
+	expectedMetricResult := `test_metric{key1="value1"} 16.13`
 	var metricList Registry
 	metricRecordSimple := MetricRecord{
 		Name:   "test_metric",
@@ -20,12 +19,7 @@ func TestRegistrySimpleMetric(t *testing.T) {
 	}
 	metricList = append(metricList, metricRecordSimple)
 
-	textFilePath := fmt.Sprintf("../.TestRegistryData-%d.prom", time.Now().UnixNano())
-	metricList.MustWriteTextfile(textFilePath)
-	defer os.Remove(textFilePath)
-
-	metricsResult, err := os.ReadFile(textFilePath)
-	assert.NoError(t, err)
+	metricsResult := metricList.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, string(metricsResult))
 }
 
@@ -57,44 +51,18 @@ func TestRegistryTooManyLabels(t *testing.T) {
 	var metricList Registry
 	metricList = append(metricList, metricRecordTooMuchLabels)
 
-	textFilePath := fmt.Sprintf("../.TestRegistryData-%d.prom", time.Now().UnixNano())
-	metricList.MustWriteTextfile(textFilePath)
-	defer os.Remove(textFilePath)
-
-	metricsResult, err := os.ReadFile(textFilePath)
-	assert.NoError(t, err)
+	metricsResult := metricList.FormatTextfileString()
 	assert.Empty(t, string(metricsResult))
 }
 
-func TestRegistryBrokenPath(t *testing.T) {
-	var metricList Registry
+func TestTextfileBrokenPath(t *testing.T) {
 	textFilePath := fmt.Sprintf("/non-existed-root-dir/.TestRegistryData-%d.prom", time.Now().UnixNano())
-	assert.Panics(t, func() { metricList.MustWriteTextfile(textFilePath) })
+	metrics := ""
+	assert.Panics(t, func() { MustWriteTextfile(textFilePath, metrics) })
 	defer os.Remove(textFilePath)
 }
 
-func TestFormatPrometheusLineNoLabels(t *testing.T) {
-	rec := MetricRecord{Name: "metricNoLabels", Labels: map[string]string{}, Value: 42}
-	line, err := rec.FormatPrometheusLine()
-	assert.NoError(t, err)
-	assert.Equal(t, "metricNoLabels{} 42\n", line)
-}
-
-func TestFormatPrometheusLineLabelSorting(t *testing.T) {
-	expectedSortedLine := `metricLabelSorting{a="1",b="2"} 1
-`
-	rec := MetricRecord{
-		Name:   "metricLabelSorting",
-		Labels: map[string]string{"b": "2", "a": "1"},
-		Value:  1,
-	}
-	line, err := rec.FormatPrometheusLine()
-
-	assert.NoError(t, err)
-	assert.Equal(t, line, expectedSortedLine)
-}
-
-func TestMustWriteTextfileWriteAtError(t *testing.T) {
+func TestTextfileWriteError(t *testing.T) {
 	var metricList Registry
 	metricList = append(metricList, MetricRecord{
 		Name:   "test_metric",
@@ -102,7 +70,8 @@ func TestMustWriteTextfileWriteAtError(t *testing.T) {
 		Value:  1,
 	})
 	dirPath := os.TempDir()
-	assert.Panics(t, func() { metricList.MustWriteTextfile(dirPath) })
+	metrics := metricList.FormatTextfileString()
+	assert.Panics(t, func() { MustWriteTextfile(dirPath, metrics) })
 }
 
 func TestGetMetricIndex_NoMatch(t *testing.T) {
