@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,18 +34,23 @@ func initLogger() {
 	slog.SetLogLoggerLevel(level)
 }
 
-func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string) string {
+func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string, ethtoolTimeout time.Duration) string {
 	var ethtoolOutputRaw []byte
 	var err error
-	// TODO: add timeout support
+	var cancel context.CancelFunc
+	var ctx context.Context
+
+	ctx, cancel = context.WithTimeout(context.Background(), ethtoolTimeout)
+	defer cancel()
+
 	if ethtoolMode == "" {
-		ethtoolOutputRaw, err = exec.Command(ethtoolPath, interfaceName).Output()
+		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, interfaceName).Output()
 	} else {
-		ethtoolOutputRaw, err = exec.Command(ethtoolPath, ethtoolMode, interfaceName).Output()
+		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, ethtoolMode, interfaceName).Output()
 	}
 
 	if err != nil {
-		slog.Debug("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
+		slog.Info("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
 		return ""
 	}
 	ethtoolOutput := string(ethtoolOutputRaw)
@@ -123,7 +129,7 @@ func collectAllMetrics() map[string]registry.Registry {
 			CollectSupportedSettings:  *collectGenericInfoModes,
 			CollectSettings:           *collectGenericInfoSettings,
 		}
-		genericInfoDataRaw := readEthtoolData(interfaceName, "", *ethtoolPath)
+		genericInfoDataRaw := readEthtoolData(interfaceName, "", *ethtoolPath, *ethtoolTimeout)
 		interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
 		genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &genericinfoConfig)
 		before := len(metricRegistry)
@@ -135,7 +141,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		driverInfoConfig := driver_info.CollectConfig{
 			DriverFeatures: *collectDriverInfoFeatures,
 		}
-		driverInfoDataRaw := readEthtoolData(interfaceName, "-i", *ethtoolPath)
+		driverInfoDataRaw := readEthtoolData(interfaceName, "-i", *ethtoolPath, *ethtoolTimeout)
 		interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
 		driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
 		before = len(metricRegistry)
@@ -150,7 +156,7 @@ func collectAllMetrics() map[string]registry.Registry {
 			CollectDiagnosticsValues:   *collectModuleInfoDiagnosticsValues,
 			CollectVendor:              *collectModuleInfoVendor,
 		}
-		moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", *ethtoolPath)
+		moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", *ethtoolPath, *ethtoolTimeout)
 		interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
 		moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &moduleInfoConfig)
 		before = len(metricRegistry)
@@ -160,7 +166,7 @@ func collectAllMetrics() map[string]registry.Registry {
 		// statistics
 		interfaceLogger.Debug("statistics: collecting metrics")
 		statisticsConfig := statistics.CollectConfig{}.Default()
-		statisticsDataRaw := readEthtoolData(interfaceName, "-S", *ethtoolPath)
+		statisticsDataRaw := readEthtoolData(interfaceName, "-S", *ethtoolPath, *ethtoolTimeout)
 		interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
 		statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
 		before = len(metricRegistry)

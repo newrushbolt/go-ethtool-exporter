@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime/debug"
 	"testing"
+	"time"
 
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/stretchr/testify/assert"
@@ -47,24 +48,32 @@ func TestReadEthtoolData(t *testing.T) {
 	// Make sure the stub is executable
 	os.Chmod(stubPath, 0755)
 
+	var out string
+	timeout, _ := time.ParseDuration("1s")
+
 	// No mode
-	out := readEthtoolData("eth0", "", stubPath)
-	assert.Contains(t, out, "ethtool output for eth0")
+	out = readEthtoolData("eth0", "", stubPath, timeout)
+	assert.Equal(t, "ethtool output for eth0\n", out)
 
 	// -i mode
-	out = readEthtoolData("eth0", "-i", stubPath)
-	assert.Contains(t, out, "driver info for eth0")
+	out = readEthtoolData("eth0", "-i", stubPath, timeout)
+	assert.Equal(t, "driver info for eth0\n", out)
 
 	// -m mode
-	out = readEthtoolData("eth0", "-m", stubPath)
-	assert.Contains(t, out, "module info for eth0")
+	out = readEthtoolData("eth0", "-m", stubPath, timeout)
+	assert.Equal(t, "module info for eth0\n", out)
 
 	// -S mode
-	out = readEthtoolData("eth0", "-S", stubPath)
-	assert.Contains(t, out, "statistics for eth0")
+	out = readEthtoolData("eth0", "-S", stubPath, timeout)
+	assert.Equal(t, "statistics for eth0\n", out)
 
 	// Unknown interface
-	out = readEthtoolData("unknown", "", stubPath)
+	out = readEthtoolData("unknown", "", stubPath, timeout)
+	assert.Equal(t, "", out)
+
+	// Timeout
+	tinyTimeout, _ := time.ParseDuration("10ms")
+	out = readEthtoolData("eth0", "-S", stubPath, tinyTimeout)
 	assert.Equal(t, "", out)
 }
 
