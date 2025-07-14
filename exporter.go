@@ -181,12 +181,16 @@ func collectAllMetrics() map[string]registry.Registry {
 }
 
 func writeAllMetricsToTextfiles(metricRegistries map[string]registry.Registry) {
-	for interfaceName, metricRegistry := range metricRegistries {
+	allMetrics := make([]string, len(metricRegistries))
+	textFileName := "ethtool_exporter.prom"
+	textFilePath := path.Join(*textfileDirectory, textFileName)
+	for _, metricRegistry := range metricRegistries {
 		// Writing file in node_exporter textfile format
-		textFileName := fmt.Sprintf("%s.prom", interfaceName)
-		textFilePath := path.Join(*textfileDirectory, textFileName)
-		metricRegistry.MustWriteTextfile(textFilePath)
+		metrics := metricRegistry.FormatTextfileString()
+		allMetrics = append(allMetrics, metrics)
 	}
+	allMetricsString := strings.Join(allMetrics, "\n")
+	registry.MustWriteTextfile(textFilePath, allMetricsString)
 }
 
 func MustDirectoryExist(dirPath *string) {
@@ -218,7 +222,6 @@ func runLoopTextfileCommand() {
 	for {
 		metricRegistries := collectAllMetrics()
 		writeAllMetricsToTextfiles(metricRegistries)
-		// TODO: Add cleanup logic for ald metrics textfiles?
 		time.Sleep(*loopTextfileUpdateInterval)
 	}
 }

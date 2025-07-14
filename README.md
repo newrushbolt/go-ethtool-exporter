@@ -12,13 +12,16 @@ Flags:
   --version
 
   --ethtool-path=/usr/sbin/ethtool
+  --ethtool-timeout
+                            Timeout for ethtool command execution
+
   --linux-net-class-path=/sys/class/net
   --textfile-directory="/var/lib/node-exporter/textfiles"
                             Path to node_exporter textfile directory.
                             Only used in "single-textfile" and "loop-textfile" modes.
 
   --keep-absent-metrics
-                            Set `Nan` for every metric that wasn't found
+                            Set `Nan` value for every metric that wasn't found
 
   // Enabled collectors
   --no-collect-generic-info-settings

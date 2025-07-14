@@ -1,10 +1,7 @@
 package metrics
 
 import (
-	"fmt"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/stretchr/testify/assert"
@@ -12,20 +9,8 @@ import (
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )
 
-func getMetricRegistryResult(metricList *registry.Registry) string {
-	textFilePath := fmt.Sprintf("../.TestAbstractData-%d.prom", time.Now().Unix())
-	metricList.MustWriteTextfile(textFilePath)
-	defer os.Remove(textFilePath)
-	metricResult, err := os.ReadFile(textFilePath)
-	if err != nil {
-		panic(err)
-	}
-	return string(metricResult)
-}
-
 func TestDropAllNils(t *testing.T) {
-	expectedMetricResult := `prefix_real_float64{} 16.13
-`
+	expectedMetricResult := `prefix_real_float64{} 16.13`
 
 	type NilStruct struct {
 		Key   string
@@ -48,14 +33,13 @@ func TestDropAllNils(t *testing.T) {
 	labels := map[string]string{}
 	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, false)
 
-	metricRegistryResult := getMetricRegistryResult(&metricRegistry)
+	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
 }
 
 func TestKeepFloat64Nils(t *testing.T) {
 	expectedMetricResult := `prefix_real_float64{} 16.13
-prefix_nil_float64{} NaN
-`
+prefix_nil_float64{} NaN`
 	type NilStruct struct {
 		Key   string
 		Value string
@@ -77,7 +61,7 @@ prefix_nil_float64{} NaN
 	labels := map[string]string{}
 	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, true)
 
-	metricRegistryResult := getMetricRegistryResult(&metricRegistry)
+	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
 }
 
@@ -87,8 +71,7 @@ prefprefix_driver_info_supported_feature_whatever{device="test_device"} 1
 prefprefix_device_data_device_index{device="test_device"} -1613.246008
 prefprefix_device_data_device_index32{device="test_device"} 1613
 prefprefix_device_data_device_uindex{device="test_device"} 1614
-prefprefix_per_qstats_tx_bytes{queue="0"} 123
-`
+prefprefix_per_qstats_tx_bytes{queue="0"} 123`
 	txBytesValue := 123.0
 
 	type DriverInfo struct {
@@ -142,14 +125,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123
 	}
 	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, false)
 
-	textFilePath := fmt.Sprintf("../.TestAbstractData-%d.prom", time.Now().Unix())
-	metricRegistry.MustWriteTextfile(textFilePath)
-	defer os.Remove(textFilePath)
-	metricResult, err := os.ReadFile(textFilePath)
-	if err != nil {
-		panic(err)
-	}
-	metricResultString := string(metricResult)
+	metricResultString := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricResultString)
 }
 
@@ -165,6 +141,8 @@ func TestMetricListFromStructsMetricIndexError(t *testing.T) {
 
 	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, false)
 }
+
+// Just a snippet for fast testing with real metrics
 
 // func TestRealIntelMetrics(t *testing.T) {
 
