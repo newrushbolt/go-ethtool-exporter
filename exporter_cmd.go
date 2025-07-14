@@ -13,6 +13,7 @@ var (
 
 	// TODO: add env support???
 	ethtoolPath       = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
+	ethtoolTimeout    = kingpin.Flag("ethtool-timeout", "Timeout for ethtool command execution.").Default("5s").Duration()
 	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
 	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory. Only used in \"single-textfile\" and \"loop-textfile\" modes.").Default("/var/lib/node-exporter/textfiles").String()
 

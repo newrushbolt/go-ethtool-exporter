@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sleep 0.1
+
 case "$1" in
   eth0)
     echo "ethtool output for eth0"
