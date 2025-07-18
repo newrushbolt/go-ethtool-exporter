@@ -4,6 +4,11 @@ import (
 	"github.com/alecthomas/kingpin/v2"
 )
 
+// TODO: add flag (--report?) for creating full metrics report archive,
+// containing output of all supporter metrics modes for all interfaces,
+// and all meta for interface discovery: bond modes, interface types, etc
+// https://github.com/newrushbolt/go-ethtool-metrics/blob/main/testdata/README.md
+
 // TODO: Should create custom `--help` renderer, being able to group flags and correctly show default values
 var (
 	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons.")
@@ -33,6 +38,7 @@ var (
 	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to \"\" to allow all port types.").Default("1,").String()
 	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.").Default("false").Bool()
 	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "").Default("true").Bool()
+	// TODO discoverPortsRegex
 	// discoverPortsRegex       = kingpin.Flag("discover-ports-regex", "Regex to filter all discovered ports.").Default(".*").Regexp()
 	// Not yet implemented
 	// discoverOvsSlaves
