@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.7](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.6...v0.0.7) (2025-07-18)
+
+
+### Bug Fixes
+
+* add ethtool timeout ([50b6af2](https://github.com/newrushbolt/go-ethtool-exporter/commit/50b6af28f4e1e5e3ea96798bdf0f077c66758fd6))
+* write all metric to single textfile ([59bcd54](https://github.com/newrushbolt/go-ethtool-exporter/commit/59bcd548c117ecba6050496809452ec95bdf3dd3))
+
 ## [0.0.6](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.5...v0.0.6) (2025-07-10)
 
 
