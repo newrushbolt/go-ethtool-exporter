@@ -21,13 +21,14 @@ func MustWriteTextfile(filePath string, fileContent string) {
 	defer os.Remove(tmpFile.Name())
 
 	_, err = tmpFile.Write([]byte(fileContent))
+	// Hard to cover by unit tests, because it would require to brake\overflow the filesystem, or mock the os.File
+	//coverage:ignore
 	if err != nil {
-		// Hard to cover by unit tests, because it would require to brake\overflow the filesystem, or mock the os.File
 		slog.Error("Cannot write formated metric to file", "file", tmpFile.Name(), "error", err)
 		panic(err)
 	}
-
 	err = tmpFile.Close()
+	//coverage:ignore
 	if err != nil {
 		panic(err)
 	}
