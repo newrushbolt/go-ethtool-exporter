@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.7...v0.0.8) (2025-07-19)
+
+
+### Bug Fixes
+
+* pre-generate pretty `--help` page, allow coverage ignore ([b4def95](https://github.com/newrushbolt/go-ethtool-exporter/commit/b4def955ef5a3089f9191be756962114b8406bd8))
+
 ## [0.0.7](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.6...v0.0.7) (2025-07-18)
 
 
