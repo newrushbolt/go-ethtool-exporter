@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 78.8
+  COVERAGE_THRESHOLD: 84.2
 
 jobs:
   test:
@@ -27,9 +27,18 @@ jobs:
       - uses: actions/checkout@v4.2.2
       - name: Run tests
         run: go test ./... -coverprofile coverage.out
+
+      - name: Check if auto-generated "--help" is up to date
+        run: |
+          go run utils/generate_exporter_help.go > exporter_help.go.new
+          diff exporter_help.go exporter_help.go.new
+
+      - name: Get coverage filtering package
+        run: go install github.com/quantumcycle/go-ignore-cov@v0.6.1
+      - name: Filter coverage
+        run: go-ignore-cov --file coverage.out
       - name: Show coverage report per-function
         run: go tool cover -func coverage.out
-      # TODO: set coverage threshold, eg https://github.com/lluuiissoo/go-testcoverage/blob/main/.github/workflows/ci.yml
       - name: Check total coverage threshold
         run: |
               echo "Coverage threshold: $COVERAGE_THRESHOLD %"

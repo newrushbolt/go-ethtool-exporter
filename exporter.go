@@ -118,6 +118,7 @@ func collectAllMetrics() map[string]registry.Registry {
 
 	slog.Debug("Discovered following interfaces, collecting metrics for them", "interfaces", interfaces)
 	// TODO: allow parallel gather
+	// TODO: split into different functions, probably move to other pkg
 	for _, interfaceName := range interfaces {
 		var metricRegistry registry.Registry
 		interfaceLogger := slog.With("interfaceName", interfaceName)
@@ -228,7 +229,14 @@ func runLoopTextfileCommand() {
 
 func main() {
 	slog.Info("Starting go-ethtool-exporter")
-	kingpin.UsageTemplate(kingpin.LongHelpTemplate)
+
+	for _, arg := range os.Args[1:] {
+		if arg == "--help" || arg == "-h" {
+			fmt.Print(helpText)
+			os.Exit(0)
+		}
+	}
+
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	exporterCommand := kingpin.Parse()
 
