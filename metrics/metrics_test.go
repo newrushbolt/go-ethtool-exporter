@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"newrushbolt/go-ethtool-exporter/registry"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )

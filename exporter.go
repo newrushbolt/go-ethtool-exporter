@@ -12,9 +12,9 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 
-	"newrushbolt/go-ethtool-exporter/collector"
-	"newrushbolt/go-ethtool-exporter/interfaces"
-	"newrushbolt/go-ethtool-exporter/registry"
+	"github.com/newrushbolt/go-ethtool-exporter/collector"
+	"github.com/newrushbolt/go-ethtool-exporter/interfaces"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"

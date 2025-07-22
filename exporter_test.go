@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 	"testing"
 
-	"newrushbolt/go-ethtool-exporter/registry"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 
 	"github.com/stretchr/testify/assert"
 )
