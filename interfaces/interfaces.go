@@ -68,8 +68,16 @@ func GetInterfacesList(netClassDirectory string, portDetectionOptions PortDiscov
 		panic(errMsg)
 	}
 
+	slog.Debug("Got unfiltered interface list", "allInterfaces", allInterfaces)
 	for _, deviceDir := range allInterfaces {
 		deviceName := deviceDir.Name()
+
+		reservedNetClassEntry := []string{"bonding_masters"}
+		if slices.Contains(reservedNetClassEntry, deviceName) {
+			slog.Debug("Skipping reserved netclass entry", "deviceName", deviceName)
+			continue
+		}
+
 		if deviceDir.Type().IsRegular() {
 			slog.Debug("Not a valid device, skipping", "deviceName", deviceName)
 			continue
@@ -93,8 +101,10 @@ func GetInterfacesList(netClassDirectory string, portDetectionOptions PortDiscov
 		}
 
 		if portShouldBeAdded {
+			slog.Debug("Port passed all filters, adding to final list", "deviceName", deviceName)
 			resultInterfaces = append(resultInterfaces, deviceName)
 		}
 	}
+	slog.Debug("Discovered following interfaces, collecting metrics", "interfaces", resultInterfaces)
 	return resultInterfaces
 }
