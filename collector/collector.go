@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"newrushbolt/go-ethtool-exporter/metrics"
-	"newrushbolt/go-ethtool-exporter/registry"
+	"github.com/newrushbolt/go-ethtool-exporter/metrics"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
