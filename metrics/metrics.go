@@ -11,7 +11,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/newrushbolt/go-ethtool-exporter/registry"
+	"newrushbolt/go-ethtool-exporter/registry"
+
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )
 

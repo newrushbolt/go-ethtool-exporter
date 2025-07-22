@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 84.2
+  COVERAGE_THRESHOLD: 89.1
 
 jobs:
   test:

@@ -7,6 +7,10 @@ case "$1" in
     echo "ethtool output for eth0"
     exit 0
     ;;
+  eth1)
+    cat "../testdata/eth1.statistics"
+    exit 0
+    ;;
   -i)
     echo "driver info for $2"
     exit 0
