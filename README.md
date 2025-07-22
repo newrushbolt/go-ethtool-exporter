@@ -7,10 +7,10 @@ Prometheus ethtool exporter on top of [go-ethtool-metrics](https://github.com/ne
 ### Port discovery
 
 Contrary to other exporters (prometheus-ethtool-exporter,node_exporter, etc) we encourage you to use **set of port-discovery options** instead of crafting eye-bleeding regexes.  
-There're a lot of scenarios when ports could be discovered by having specific interface type, being part of bond or bridge, etc.
+There are a lot of scenarios when ports could be discovered by having a specific interface type, being part of a bond or bridge, etc.
 
-ATM there're several options, but if you have another scenario, don't hesitate to introduce it via pull-request.  
-Or just drop an Github issue with info about your discovery scenario, if you are not into Golang.
+There are several options, but if you have another scenario, don't hesitate to introduce it via a pull-request.  
+Or just drop a Github issue with info about your discovery scenario, if you are not into Golang.
 
 ```
 Port detection settings:
@@ -19,7 +19,7 @@ Port detection settings:
   --discover-all-ports
     Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
   --no-discover-bond-slaves
-    Discover ports that are enslaved by bonds
+    Whether we discover ports that are enslaved by bonds
 ```
 
 As the last resort, you can always use `--discover-ports-regex` together with `--discover-all-ports --discover-allowed-port-types=""`.  
@@ -64,6 +64,6 @@ Discovered following ports:
   - gretap0
 ```
 
-### All avaliable options
+### All available options
 
 Read [auto-generated usage in repo](exporter_help.go) or run `go-ethtool-exporter --help`.

@@ -1,7 +1,0 @@
-total 13896
-drwxr-xr-x@  6 newrushbolt  staff   192B Jul 22 17:49 .
-drwxr-xr-x@ 23 newrushbolt  staff   736B Jul 22 17:41 ..
--rwxr-xr-x@  1 newrushbolt  staff   6.8M Jul 22 17:49 __debug_bin3829469920
--rw-r--r--@  1 newrushbolt  staff   4.2K Jul 22 17:39 collector.go
--rw-r--r--@  1 newrushbolt  staff   3.0K Jul 22 17:45 collector_test.go
--rw-r--r--@  1 newrushbolt  staff     0B Jul 22 17:49 output

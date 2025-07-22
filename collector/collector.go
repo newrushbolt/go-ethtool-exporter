@@ -35,12 +35,13 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 	ctx, cancel = context.WithTimeout(context.Background(), ethtoolTimeout)
 	defer cancel()
 
-	if ethtoolMode == "" {
-		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, interfaceName).Output()
-	} else {
-		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, ethtoolMode, interfaceName).Output()
+	ethtoolArgs := []string{}
+	if ethtoolMode != "" {
+		ethtoolArgs = append(ethtoolArgs, ethtoolMode)
 	}
+	ethtoolArgs = append(ethtoolArgs, interfaceName)
 
+	ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, ethtoolArgs...).Output()
 	if err != nil {
 		slog.Info("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
 		return ""
