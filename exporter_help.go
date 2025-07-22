@@ -5,6 +5,8 @@ package main
 const helpText = `USAGE:
 Commands:
 
+discover-ports:
+  Show discovered ports and exit
 loop-textfile:
   Writes all metrics to textfiles every loop-interval.
     --loop-textfile-update-interval=30s
@@ -43,6 +45,7 @@ Port detection settings:
   --discover-all-ports
     Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
   --no-discover-bond-slaves
+    Discover ports that are enslaved by bonds
 
 Absent metrics settings:
   --keep-absent-metrics

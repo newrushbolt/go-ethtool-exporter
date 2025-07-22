@@ -116,7 +116,6 @@ func collectAllMetrics() map[string]registry.Registry {
 	}
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
 
-	slog.Debug("Discovered following interfaces, collecting metrics for them", "interfaces", interfaces)
 	// TODO: allow parallel gather
 	// TODO: split into different functions, probably move to other pkg
 	for _, interfaceName := range interfaces {
@@ -210,6 +209,23 @@ func init() {
 	initLogger()
 }
 
+func runDiscoverPortsCommand() {
+	// Discover ports mode
+	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
+	discoverConfig := interfaces.PortDiscoveryOptions{
+		DiscoverAllPorts:   *discoverAllPorts,
+		DiscoverBondSlaves: *discoverBondSlaves,
+	}
+	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
+	if len(interfaces) == 0 {
+		fmt.Println("No ports discovered, re-run with `GO_ETHTOOL_EXPORTER_LOG_LEVEL=DEBUG` to check the discovery logic")
+	} else {
+		fmt.Println("Discovered following ports:")
+		interfacesString := fmt.Sprintf("  - %s", strings.Join(interfaces, "\n  - "))
+		fmt.Println(interfacesString)
+	}
+}
+
 func runSingleTextfileCommand() {
 	// Single textfile mode
 	MustDirectoryExist(textfileDirectory)
@@ -241,6 +257,8 @@ func main() {
 	exporterCommand := kingpin.Parse()
 
 	switch exporterCommand {
+	case discoverPortsCommand.FullCommand():
+		runDiscoverPortsCommand()
 	case singleTextfileCommand.FullCommand():
 		runSingleTextfileCommand()
 	case loopTextfileCommand.FullCommand():
