@@ -19,7 +19,8 @@ func TestReadEthtoolData(t *testing.T) {
 	os.Chmod(stubPath, 0755)
 
 	var out string
-	timeout, _ := time.ParseDuration("1s")
+	timeout, err := time.ParseDuration("1s")
+	assert.NoError(t, err)
 
 	// No mode
 	out = readEthtoolData("eth0", "", stubPath, timeout)
@@ -43,14 +44,13 @@ func TestReadEthtoolData(t *testing.T) {
 
 	// Timeout
 	tinyTimeout, err := time.ParseDuration("10ms")
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	out = readEthtoolData("eth0", "-S", stubPath, tinyTimeout)
 	assert.Equal(t, "", out)
 }
 
-func TestEmptyCollectInterfacMetrics(t *testing.T) {
+func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 
 	genericinfoConfig := generic_info.CollectConfig{}.Default()
 	driverInfoConfig := driver_info.CollectConfig{}.Default()
@@ -76,7 +76,7 @@ func TestEmptyCollectInterfacMetrics(t *testing.T) {
 	assert.Len(t, registry, 0)
 }
 
-func TestGenericIntelCollectInterfacMetrics(t *testing.T) {
+func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 	// driver_info_info should not be presented, it's a bug in go-ethtool-metrics
 	expectedMetricResult := `generic_info_supported_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="Symmetric",device="eth1"} 1
 generic_info_advertised_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="No",device="eth1"} 1

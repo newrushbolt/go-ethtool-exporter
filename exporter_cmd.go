@@ -44,8 +44,8 @@ var (
 	// FLAG GROUP START: Port detection settings
 	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
 	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types.").Default("1,").String()
-	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.").Default("false").Bool()
-	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "Discover ports that are enslaved by bonds").Default("true").Bool()
+	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.").Default("false").Bool()
+	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "Whether we discover ports that are enslaved by bonds").Default("true").Bool()
 	// TODO discoverPortsRegex
 	// discoverPortsRegex       = kingpin.Flag("discover-ports-regex", "Only discover ports with names matching this regex.").Default(".*").Regexp()
 	// Not yet implemented

@@ -43,9 +43,9 @@ Port detection settings:
   --discover-allowed-port-types=1,
     Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types.
   --discover-all-ports
-    Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
+    Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
   --no-discover-bond-slaves
-    Discover ports that are enslaved by bonds
+    Whether we discover ports that are enslaved by bonds
 
 Absent metrics settings:
   --keep-absent-metrics
