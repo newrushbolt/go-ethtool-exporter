@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"runtime/debug"
 	"strconv"
@@ -14,9 +12,9 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 
-	"github.com/newrushbolt/go-ethtool-exporter/interfaces"
-	"github.com/newrushbolt/go-ethtool-exporter/metrics"
-	"github.com/newrushbolt/go-ethtool-exporter/registry"
+	"newrushbolt/go-ethtool-exporter/collector"
+	"newrushbolt/go-ethtool-exporter/interfaces"
+	"newrushbolt/go-ethtool-exporter/registry"
 
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
@@ -32,29 +30,6 @@ func initLogger() {
 		level = slog.LevelInfo
 	}
 	slog.SetLogLoggerLevel(level)
-}
-
-func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string, ethtoolTimeout time.Duration) string {
-	var ethtoolOutputRaw []byte
-	var err error
-	var cancel context.CancelFunc
-	var ctx context.Context
-
-	ctx, cancel = context.WithTimeout(context.Background(), ethtoolTimeout)
-	defer cancel()
-
-	if ethtoolMode == "" {
-		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, interfaceName).Output()
-	} else {
-		ethtoolOutputRaw, err = exec.CommandContext(ctx, ethtoolPath, ethtoolMode, interfaceName).Output()
-	}
-
-	if err != nil {
-		slog.Info("Cannot run ethtool command", "ethtoolPath", ethtoolPath, "ethtoolMode", ethtoolMode, "error", err)
-		return ""
-	}
-	ethtoolOutput := string(ethtoolOutputRaw)
-	return ethtoolOutput
 }
 
 func parseAllowedInterfaceTypes(typesStr string) []int {
@@ -118,66 +93,37 @@ func collectAllMetrics() map[string]registry.Registry {
 
 	// TODO: allow parallel gather
 	// TODO: split into different functions, probably move to other pkg
+
+	// Format configs
+	genericinfoConfig := generic_info.CollectConfig{
+		CollectAdvertisedSettings: *collectGenericInfoModes,
+		CollectSupportedSettings:  *collectGenericInfoModes,
+		CollectSettings:           *collectGenericInfoSettings,
+	}
+	driverInfoConfig := driver_info.CollectConfig{
+		DriverFeatures: *collectDriverInfoFeatures,
+	}
+	moduleInfoConfig := module_info.CollectConfig{
+		CollectDiagnosticsAlarms:   *collectModuleInfoDiagnosticsAlarms,
+		CollectDiagnosticsWarnings: *collectModuleInfoDiagnosticsWarnings,
+		CollectDiagnosticsValues:   *collectModuleInfoDiagnosticsValues,
+		CollectVendor:              *collectModuleInfoVendor,
+	}
+	statisticsConfig := *(statistics.CollectConfig{}.Default())
+
+	collectorConfig := collector.CollectorConfig{
+		GenericInfo:       genericinfoConfig,
+		DriverInfo:        driverInfoConfig,
+		ModuleInfo:        moduleInfoConfig,
+		Statistics:        statisticsConfig,
+		EthtoolPath:       *ethtoolPath,
+		EthtoolTimeout:    *ethtoolTimeout,
+		KeepAbsentMetrics: *keepAbsentMetrics,
+	}
+
 	for _, interfaceName := range interfaces {
-		var metricRegistry registry.Registry
-		interfaceLogger := slog.With("interfaceName", interfaceName)
-		deviceLabels := map[string]string{
-			"device": interfaceName,
-		}
-
-		// generic_info
-		interfaceLogger.Debug("generic_info: collecting metrics")
-		genericinfoConfig := generic_info.CollectConfig{
-			CollectAdvertisedSettings: *collectGenericInfoModes,
-			CollectSupportedSettings:  *collectGenericInfoModes,
-			CollectSettings:           *collectGenericInfoSettings,
-		}
-		genericInfoDataRaw := readEthtoolData(interfaceName, "", *ethtoolPath, *ethtoolTimeout)
-		interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
-		genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &genericinfoConfig)
-		before := len(metricRegistry)
-		metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, deviceLabels, *keepAbsentMetrics)
-		interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
-
-		// driver_info
-		interfaceLogger.Debug("driver_info: collecting metrics")
-		driverInfoConfig := driver_info.CollectConfig{
-			DriverFeatures: *collectDriverInfoFeatures,
-		}
-		driverInfoDataRaw := readEthtoolData(interfaceName, "-i", *ethtoolPath, *ethtoolTimeout)
-		interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
-		driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
-		before = len(metricRegistry)
-		metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, deviceLabels, *keepAbsentMetrics)
-		interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
-
-		// module_info
-		interfaceLogger.Debug("module_info: collecting metrics")
-		moduleInfoConfig := module_info.CollectConfig{
-			CollectDiagnosticsAlarms:   *collectModuleInfoDiagnosticsAlarms,
-			CollectDiagnosticsWarnings: *collectModuleInfoDiagnosticsWarnings,
-			CollectDiagnosticsValues:   *collectModuleInfoDiagnosticsValues,
-			CollectVendor:              *collectModuleInfoVendor,
-		}
-		moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", *ethtoolPath, *ethtoolTimeout)
-		interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
-		moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &moduleInfoConfig)
-		before = len(metricRegistry)
-		metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, deviceLabels, *keepAbsentMetrics)
-		interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
-
-		// statistics
-		interfaceLogger.Debug("statistics: collecting metrics")
-		statisticsConfig := statistics.CollectConfig{}.Default()
-		statisticsDataRaw := readEthtoolData(interfaceName, "-S", *ethtoolPath, *ethtoolTimeout)
-		interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
-		statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
-		before = len(metricRegistry)
-		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, deviceLabels, *keepAbsentMetrics)
-		interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
-
-		interfaceLogger.Debug("Total metric count", "metricCount", len(metricRegistry))
-		allMetricRegistries[interfaceName] = metricRegistry
+		interfaceRegistry := collector.CollectInterfaceMetrics(interfaceName, collectorConfig)
+		allMetricRegistries[interfaceName] = interfaceRegistry
 	}
 
 	return allMetricRegistries
