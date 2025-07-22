@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.9](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.8...v0.0.9) (2025-07-22)
+
+
+### Bug Fixes
+
+* better info about port discovery ([7cb2ef0](https://github.com/newrushbolt/go-ethtool-exporter/commit/7cb2ef010a8d9bc3a1fcfd0cb4298e8f32d045be))
+* missing device name ([db1d71c](https://github.com/newrushbolt/go-ethtool-exporter/commit/db1d71c2cb0a9ab555f4a357a742f0fe1e36a3d7))
+* separate collector package, test for device name ([f1d19de](https://github.com/newrushbolt/go-ethtool-exporter/commit/f1d19dea0b79deabcbe637b4a76de67a1d9fe7be))
+
+
+### Miscellaneous Chores
+
+* minor grammar fixes ([1151109](https://github.com/newrushbolt/go-ethtool-exporter/commit/1151109608c08270e0b58504fbfd457c90a06c5d))
+
 ## [0.0.8](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.7...v0.0.8) (2025-07-19)
 
 
