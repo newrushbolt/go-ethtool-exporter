@@ -30,6 +30,7 @@ var (
 
 	// FLAG GROUP START: Collectors, enabled by default
 	collectGenericInfoSettings           = kingpin.Flag("collect-generic-info-settings", "").Default("true").Bool()
+	collectDriverInfoCommon              = kingpin.Flag("collect-driver-info-common", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
 	// FLAG GROUP END

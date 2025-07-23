@@ -30,6 +30,7 @@ Various paths settings:
 
 Collectors, enabled by default:
   --no-collect-generic-info-settings
+  --no-collect-driver-info-common
   --no-collect-module-info-diagnostics-alarms
   --no-collect-module-info-diagnostics-warnings
 
