@@ -83,8 +83,7 @@ generic_info_advertised_settings_info{FecModes="Not reported",LinkModes="10000ba
 generic_info_settings_info{Duplex="Full",Port="FIBRE",Speed="10000Mb/s",Transceiver="internal",device="eth1"} 1
 generic_info_settings_speed_bytes{device="eth1"} 1e+10
 generic_info_settings_auto_negotiation{device="eth1"} 0
-generic_info_settings_link_detected{device="eth1"} 1
-driver_info_info{BusAddress="",DriverName="",DriverVersion="",FirmwareVersion="",FirmwareVersionParts="",device="eth1"} 1`
+generic_info_settings_link_detected{device="eth1"} 1`
 
 	genericinfoConfig := generic_info.CollectConfig{
 		CollectAdvertisedSettings: true,
@@ -92,7 +91,8 @@ driver_info_info{BusAddress="",DriverName="",DriverVersion="",FirmwareVersion=""
 		CollectSettings:           true,
 	}
 	driverInfoConfig := driver_info.CollectConfig{
-		DriverFeatures: false,
+		CollectCommon:   false,
+		CollectFeatures: false,
 	}
 	moduleInfoConfig := module_info.CollectConfig{
 		CollectDiagnosticsAlarms:   false,

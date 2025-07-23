@@ -5,7 +5,7 @@ go 1.23.0
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/newrushbolt/go-ethtool-metrics v0.0.4
+	github.com/newrushbolt/go-ethtool-metrics v0.0.5
 	github.com/stretchr/testify v1.10.0
 )
 

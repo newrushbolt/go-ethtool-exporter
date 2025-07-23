@@ -101,7 +101,8 @@ func collectAllMetrics() map[string]registry.Registry {
 		CollectSettings:           *collectGenericInfoSettings,
 	}
 	driverInfoConfig := driver_info.CollectConfig{
-		DriverFeatures: *collectDriverInfoFeatures,
+		CollectCommon:   *collectDriverInfoCommon,
+		CollectFeatures: *collectDriverInfoFeatures,
 	}
 	moduleInfoConfig := module_info.CollectConfig{
 		CollectDiagnosticsAlarms:   *collectModuleInfoDiagnosticsAlarms,
