@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.9...v0.0.10) (2025-07-24)
+
+
+### Bug Fixes
+
+* allow disabling driver_info ([fc050a7](https://github.com/newrushbolt/go-ethtool-exporter/commit/fc050a7dfb7b3a92b9d658cb01a9e7c41303254c))
+
 ## [0.0.9](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.8...v0.0.9) (2025-07-22)
 
 
