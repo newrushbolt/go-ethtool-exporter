@@ -15,11 +15,13 @@ Or just drop a Github issue with info about your discovery scenario, if you are 
 ```
 Port detection settings:
   --discover-allowed-port-types=1,
-    Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types.
+    Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types
   --discover-all-ports
-    Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
+    Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'
   --no-discover-bond-slaves
     Whether we discover ports that are enslaved by bonds
+  --discover-ports-regexp=.*
+    Only discover ports with names matching this regex
 ```
 
 As the last resort, you can always use `--discover-ports-regex` together with `--discover-all-ports --discover-allowed-port-types=""`.  
