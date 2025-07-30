@@ -5,12 +5,14 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 )
 
 type PortDiscoveryOptions struct {
+	PortsRegexp        *regexp.Regexp
 	DiscoverAllPorts   bool
 	DiscoverBondSlaves bool
 	// TODO: filter out ovs ports by reading link, eg `/sys/class/net/tap2473528a-b1/master -> ../ovs-system`
@@ -81,6 +83,11 @@ func GetInterfacesList(netClassDirectory string, portDetectionOptions PortDiscov
 
 		if deviceDir.Type().IsRegular() {
 			slog.Debug("Not a valid device, skipping", "deviceName", deviceName)
+			continue
+		}
+
+		if !portDetectionOptions.PortsRegexp.MatchString(deviceName) {
+			slog.Debug("Port doesn't match regexp, skipping", "deviceName", deviceName, "regexp", portDetectionOptions.PortsRegexp)
 			continue
 		}
 

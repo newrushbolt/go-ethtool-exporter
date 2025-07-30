@@ -8,12 +8,12 @@ Commands:
 discover-ports:
   Show discovered ports and exit
 loop-textfile:
-  Writes all metrics to textfiles every loop-interval.
+  Writes all metrics to textfiles every loop-interval
     --loop-textfile-update-interval=30s
-        Interval between textfiles updates.
+        Interval between textfiles updates
 
 single-textfile:
-  Writes all metrics to textfiles ONCE. Usefull for testing or crons.
+  Writes all metrics to textfiles ONCE. Usefull for testing or crons
 
 
 Flags:
@@ -26,7 +26,7 @@ Ethtool settings:
 Various paths settings:
   --linux-net-class-path=/sys/class/net
   --textfile-directory=/var/lib/node-exporter/textfiles
-    Path to node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes.
+    Path to node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes
 
 Collectors, enabled by default:
   --no-collect-generic-info-settings
@@ -42,11 +42,13 @@ Collectors, disabled by default:
 
 Port detection settings:
   --discover-allowed-port-types=1,
-    Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types.
+    Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types
   --discover-all-ports
-    Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regex'.
+    Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'
   --no-discover-bond-slaves
     Whether we discover ports that are enslaved by bonds
+  --discover-ports-regexp=.+
+    Only discover ports with names matching this regexp
 
 Absent metrics settings:
   --keep-absent-metrics

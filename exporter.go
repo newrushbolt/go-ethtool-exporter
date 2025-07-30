@@ -163,6 +163,7 @@ func runDiscoverPortsCommand() {
 	// Discover ports mode
 	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
 	discoverConfig := interfaces.PortDiscoveryOptions{
+		PortsRegexp:        *discoverPortsRegexp,
 		DiscoverAllPorts:   *discoverAllPorts,
 		DiscoverBondSlaves: *discoverBondSlaves,
 	}

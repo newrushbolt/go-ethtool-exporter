@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,9 +10,22 @@ import (
 
 var defaultNetClassPath = "../testdata/interfaces/sys/class/net"
 
+func TestInterfacesRegexp(t *testing.T) {
+	allowedTypes := []int{}
+	discoverConfig := PortDiscoveryOptions{
+		PortsRegexp:        regexp.MustCompile("[a-z]+[0-1]"),
+		DiscoverAllPorts:   true,
+		DiscoverBondSlaves: true,
+	}
+	interfaces := GetInterfacesList(defaultNetClassPath, discoverConfig, allowedTypes)
+
+	assert.Equal(t, interfaces, []string{"bond0", "eth0", "eth1"})
+}
+
 func TestInterfacesAllTypes(t *testing.T) {
 	allowedTypes := []int{}
 	discoverConfig := PortDiscoveryOptions{
+		PortsRegexp:        regexp.MustCompile(".+"),
 		DiscoverAllPorts:   true,
 		DiscoverBondSlaves: true,
 	}
@@ -23,6 +37,7 @@ func TestInterfacesAllTypes(t *testing.T) {
 func TestInterfacesAllEthernet(t *testing.T) {
 	allowedTypes := []int{1}
 	discoverConfig := PortDiscoveryOptions{
+		PortsRegexp:        regexp.MustCompile(".+"),
 		DiscoverAllPorts:   true,
 		DiscoverBondSlaves: true,
 	}
@@ -34,6 +49,7 @@ func TestInterfacesAllEthernet(t *testing.T) {
 func TestInterfacesBonded(t *testing.T) {
 	allowedTypes := []int{1}
 	discoverConfig := PortDiscoveryOptions{
+		PortsRegexp:        regexp.MustCompile(".+"),
 		DiscoverAllPorts:   false,
 		DiscoverBondSlaves: true,
 	}
@@ -46,6 +62,7 @@ func TestInterfacesBrokenPath(t *testing.T) {
 	absentNetClassPath := "../testdata/interfaces/sys/class/net2"
 	allowedTypes := []int{1}
 	discoverConfig := PortDiscoveryOptions{
+		PortsRegexp:        regexp.MustCompile(".+"),
 		DiscoverAllPorts:   false,
 		DiscoverBondSlaves: true,
 	}
