@@ -47,6 +47,7 @@ var (
 	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types").Default("1,").String()
 	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'").Default("false").Bool()
 	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "Whether we discover ports that are enslaved by bonds").Default("true").Bool()
+	discoverBridgeSlaves     = kingpin.Flag("discover-bridge-slaves", "Whether we discover ports that are enslaved by bridges").Default("false").Bool()
 	discoverPortsRegexp      = kingpin.Flag("discover-ports-regexp", "Only discover ports with names matching this regexp").Default(".+").Regexp()
 	// Not yet implemented
 	// discoverOvsSlaves

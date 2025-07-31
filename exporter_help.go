@@ -47,6 +47,8 @@ Port detection settings:
     Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'
   --no-discover-bond-slaves
     Whether we discover ports that are enslaved by bonds
+  --discover-bridge-slaves
+    Whether we discover ports that are enslaved by bridges
   --discover-ports-regexp=.+
     Only discover ports with names matching this regexp
 
