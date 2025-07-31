@@ -81,7 +81,8 @@ func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 	expectedMetricResult := `generic_info_supported_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="Symmetric",device="eth1"} 1
 generic_info_advertised_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="No",device="eth1"} 1
 generic_info_settings_info{Duplex="Full",Port="FIBRE",Speed="10000Mb/s",Transceiver="internal",device="eth1"} 1
-generic_info_settings_speed_bytes{device="eth1"} 1e+10
+generic_info_settings_speed_bytes{device="eth1"} 1.25e+09
+generic_info_settings_speed_bits{device="eth1"} 1e+10
 generic_info_settings_auto_negotiation{device="eth1"} 0
 generic_info_settings_link_detected{device="eth1"} 1`
 

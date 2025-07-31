@@ -8,7 +8,7 @@ case "$1" in
     exit 0
     ;;
   eth1)
-    cat "../testdata/eth1.statistics"
+    cat "../testdata/eth1.generic_info"
     exit 0
     ;;
   -i)
