@@ -51,7 +51,6 @@ func TestReadEthtoolData(t *testing.T) {
 }
 
 func TestEmptyCollectInterfaceMetrics(t *testing.T) {
-
 	genericinfoConfig := generic_info.CollectConfig{}.Default()
 	driverInfoConfig := driver_info.CollectConfig{}.Default()
 	moduleInfoConfig := module_info.CollectConfig{}.Default()
@@ -76,8 +75,8 @@ func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 	assert.Len(t, registry, 0)
 }
 
+// Test with real intel metrics
 func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
-	// driver_info_info should not be presented, it's a bug in go-ethtool-metrics
 	expectedMetricResult := `generic_info_supported_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="Symmetric",device="eth1"} 1
 generic_info_advertised_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="No",device="eth1"} 1
 generic_info_settings_info{Duplex="Full",Port="FIBRE",Speed="10000Mb/s",Transceiver="internal",device="eth1"} 1
@@ -117,6 +116,7 @@ generic_info_settings_link_detected{device="eth1"} 1`
 		EthtoolPath:       ethtoolPath,
 		EthtoolTimeout:    ethtoolTimeout,
 		KeepAbsentMetrics: keepAbsentMetrics,
+		ListLabelFormat:   "single-label",
 	}
 
 	registry := CollectInterfaceMetrics("eth1", collectorConfig)

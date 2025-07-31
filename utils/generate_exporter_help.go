@@ -12,6 +12,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"log/slog"
 	"os"
 	"sort"
 	"strings"
@@ -70,6 +71,7 @@ func extractCommandInfo(expr ast.Expr) (name, description string) {
 func extractFlagInfo(expr ast.Expr) (name, description, defaultValue, flagType string, isCommandFlag bool, cmdVarName string) {
 	// Start from the outermost call (e.g., .String(), .Bool(), .ExistingFile())
 	currentExpr := expr
+	extraDescription := ""
 
 	// Traverse backwards to find the type method and default value
 	for {
@@ -88,6 +90,14 @@ func extractFlagInfo(expr ast.Expr) (name, description, defaultValue, flagType s
 		switch methodName {
 		case "String", "Bool", "Duration", "Regexp", "ExistingFile", "ExistingDir":
 			flagType = methodName
+		case "Enum":
+			enumValues := []string{}
+			for _, arg := range callExpr.Args {
+				if lit, ok := arg.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+					enumValues = append(enumValues, strings.Trim(lit.Value, `"`))
+				}
+			}
+			extraDescription = fmt.Sprintf(". Possible values are: %s", strings.Join(enumValues, ", "))
 		case "Default":
 			if len(callExpr.Args) > 0 {
 				if lit, ok := callExpr.Args[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
@@ -112,10 +122,14 @@ func extractFlagInfo(expr ast.Expr) (name, description, defaultValue, flagType s
 					description = strings.Trim(descLit.Value, `"`)
 				}
 			}
+			description += extraDescription
 			return // Found the Flag call, we have all info
+		default:
+			slog.Error("Skipping unknown kingpin method", "methodName", methodName)
 		}
 		currentExpr = selectorExpr.X // Move to the receiver of the current method call
 	}
+	description += extraDescription
 	return
 }
 

@@ -32,7 +32,7 @@ func TestDropAllNils(t *testing.T) {
 	metricRegistry := registry.Registry{}
 	prefixes := []string{"prefix"}
 	labels := map[string]string{}
-	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, false)
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, false, "single-label")
 
 	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
@@ -60,7 +60,7 @@ prefix_nil_float64{} NaN`
 	metricRegistry := registry.Registry{}
 	prefixes := []string{"prefix"}
 	labels := map[string]string{}
-	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, true)
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, true, "single-label")
 
 	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
@@ -124,7 +124,7 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123`
 	labels := map[string]string{
 		"device": "test_device",
 	}
-	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, false)
+	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, false, "single-label")
 
 	metricResultString := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricResultString)
@@ -140,7 +140,38 @@ func TestMetricListFromStructsMetricIndexError(t *testing.T) {
 	}
 	input := dummyStruct{Info: "test"}
 
-	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, false)
+	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, false, "single-label")
+}
+
+func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
+	expectedResultMultilabel := `info{DriverName="test_driver",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
+	expectedResultBoth := `info{DriverName="test_driver",FirmwareVersionParts="version_p1,version_p2",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
+
+	type DriverInfo struct {
+		DriverName           string
+		FirmwareVersionParts []string
+	}
+
+	driverInfo := DriverInfo{
+		DriverName: "test_driver",
+		FirmwareVersionParts: []string{
+			"version_p1",
+			"version_p2",
+		},
+	}
+
+	metricRegistry := registry.Registry{}
+	prefixes := []string{}
+	labels := map[string]string{}
+
+	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, true, "multi-label")
+	metricResultString := metricRegistry.FormatTextfileString()
+	assert.Equal(t, expectedResultMultilabel, metricResultString)
+
+	metricRegistry = registry.Registry{}
+	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, true, "both")
+	metricResultString = metricRegistry.FormatTextfileString()
+	assert.Equal(t, expectedResultBoth, metricResultString)
 }
 
 // Just a snippet for fast testing with real metrics

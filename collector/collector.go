@@ -24,6 +24,7 @@ type CollectorConfig struct {
 	EthtoolPath       string
 	EthtoolTimeout    time.Duration
 	KeepAbsentMetrics bool
+	ListLabelFormat   string
 }
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string, ethtoolTimeout time.Duration) string {
@@ -63,7 +64,7 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 	interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
 	genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &config.GenericInfo)
 	before := len(metricRegistry)
-	metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, deviceLabels, config.KeepAbsentMetrics)
+	metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
 	interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
 
 	// driver_info
@@ -72,7 +73,7 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 	interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
 	driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &config.DriverInfo)
 	before = len(metricRegistry)
-	metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, deviceLabels, config.KeepAbsentMetrics)
+	metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
 	interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
 
 	// module_info
@@ -81,7 +82,7 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 	interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
 	moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &config.ModuleInfo)
 	before = len(metricRegistry)
-	metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, deviceLabels, config.KeepAbsentMetrics)
+	metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
 	interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
 
 	// statistics
@@ -90,7 +91,7 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 	interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
 	statisticsData := statistics.ParseInfo(statisticsDataRaw, &config.Statistics)
 	before = len(metricRegistry)
-	metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, deviceLabels, config.KeepAbsentMetrics)
+	metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
 	interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
 
 	interfaceLogger.Debug("Total metric count", "metricCount", len(metricRegistry))
