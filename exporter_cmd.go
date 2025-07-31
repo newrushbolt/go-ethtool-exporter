@@ -12,10 +12,10 @@ import (
 var (
 	discoverPortsCommand = kingpin.Command("discover-ports", "Show discovered ports and exit")
 
-	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfiles ONCE. Usefull for testing or crons")
+	singleTextfileCommand = kingpin.Command("single-textfile", "Writes all metrics to textfile ONCE. Usefull for testing or crons")
 
-	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfiles every loop-interval")
-	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfiles updates").Default("30s").Duration()
+	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfile every loop-interval")
+	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfile updates").Default("30s").Duration()
 
 	// TODO: add env support???
 	// FLAG GROUP START: Ethtool settings
@@ -25,7 +25,7 @@ var (
 
 	// FLAG GROUP START: Various paths settings
 	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
-	textfileDirectory = kingpin.Flag("textfile-directory", "Path to node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
+	textfileDirectory = kingpin.Flag("textfile-directory", "Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, enabled by default
@@ -45,9 +45,9 @@ var (
 	// FLAG GROUP START: Port detection settings
 	// All possible types: https://github.com/torvalds/linux/blob/772b78c2abd85586bb90b23adff89f7303c704c7/include/uapi/linux/if_arp.h#L29
 	discoverAllowedPortTypes = kingpin.Flag("discover-allowed-port-types", "Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types").Default("1,").String()
-	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Force discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'").Default("false").Bool()
-	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "Whether we discover ports that are enslaved by bonds").Default("true").Bool()
-	discoverBridgeSlaves     = kingpin.Flag("discover-bridge-slaves", "Whether we discover ports that are enslaved by bridges").Default("false").Bool()
+	discoverAllPorts         = kingpin.Flag("discover-all-ports", "Force discover all the ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'").Default("false").Bool()
+	discoverBondSlaves       = kingpin.Flag("discover-bond-slaves", "Whether to discover ports that are enslaved by bonds").Default("true").Bool()
+	discoverBridgeSlaves     = kingpin.Flag("discover-bridge-slaves", "Whether to discover ports that are enslaved by bridges").Default("false").Bool()
 	discoverPortsRegexp      = kingpin.Flag("discover-ports-regexp", "Only discover ports with names matching this regexp").Default(".+").Regexp()
 	// Not yet implemented
 	// discoverOvsSlaves
@@ -59,6 +59,6 @@ var (
 	// Absent metrics (*float64 nil) behavior
 	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
 	// Maybe they should be per-module?
-	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that wasn't found").Default("false").Bool()
+	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that was not found").Default("false").Bool()
 	// FLAG GROUP END
 )
