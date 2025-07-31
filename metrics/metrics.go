@@ -37,7 +37,7 @@ func toSnakeCase(inputString string) string {
 	return strings.ToLower(inputString)
 }
 
-func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, keepAbsentMetrics bool) {
+func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, keepAbsentMetrics bool, listLabelFormat string) {
 	// TODO: add counters for all kind of metric events: parsed structures, parsed floats, parsed nils, parse errors, etc
 	inputStructValue := reflect.ValueOf(inputStruct)
 	switch inputStructValue.Kind() {
@@ -46,7 +46,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		// TODO: Handle absent metrics logic due to flags
 		if !inputStructValue.IsNil() {
 			newPrefixes := slices.Clone(prefixes)
-			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics)
+			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
 		} else {
 			if !keepAbsentMetrics {
 				slog.Debug("Skipping nil pointer because keepAbsentMetrics=false", "prefixes", prefixes)
@@ -58,7 +58,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 					slog.Debug("Adding `Nan` for missing float64 metric", "prefixes", prefixes)
 					newPrefixes := slices.Clone(prefixes)
 					nanValue := math.NaN()
-					MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, keepAbsentMetrics)
+					MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
 				}
 			} else {
 				slog.Debug("Skipping nil pointer, keeping nils only supporter for float64", "prefixes", prefixes, "type", inputType)
@@ -70,7 +70,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		for structFieldIndex := range inputStructValue.NumField() {
 			field := inputStructValue.Type().Field(structFieldIndex)
 			newPrefixes := append(prefixes, []string{field.Name}...)
-			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics)
+			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
 		}
 	// Handle simple types
 	default:
@@ -101,37 +101,46 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 					labels := map[string]string{
 						"queue": fmt.Sprintf("%d", queue),
 					}
-					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels, keepAbsentMetrics)
+					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels, keepAbsentMetrics, listLabelFormat)
 				}
 				// Do not add metric for subspace itself
 				return
+			}
+
+			labelName := prefixes[len(prefixes)-1]
+			prefixes = append(prefixes[:len(prefixes)-1], "info")
+			metricName := toSnakeCase(strings.Join(prefixes, "_"))
+
+			if inputStructValue.Kind() == reflect.String {
+				metricLabels[labelName] = inputStructValue.String()
 			} else {
-				labelName := prefixes[len(prefixes)-1]
-				prefixes = append(prefixes[:len(prefixes)-1], "info")
-				metricName := toSnakeCase(strings.Join(prefixes, "_"))
-				var labelValues []string
-				if inputStructValue.Kind() == reflect.String {
-					labelValues = append(labelValues, inputStructValue.String())
-				} else {
-					for elementIndex := range inputStructValue.Len() {
-						element := inputStructValue.Index(elementIndex)
-						labelValues = append(labelValues, element.String())
+				var labelValuesToJoin []string
+				for elementIndex := range inputStructValue.Len() {
+					element := inputStructValue.Index(elementIndex)
+					if slices.Contains([]string{"multi-label", "both"}, listLabelFormat) {
+						partedLabelName := fmt.Sprintf("%sP%d", labelName, elementIndex)
+						metricLabels[partedLabelName] = element.String()
+					}
+					if slices.Contains([]string{"single-label", "both"}, listLabelFormat) {
+						labelValuesToJoin = append(labelValuesToJoin, element.String())
 					}
 				}
-				labelValuesString := strings.Join(labelValues, ",")
-				metricLabels[labelName] = labelValuesString
-				metricIndex, err := metricList.GetMetricIndex(metricName)
-				if err != nil {
-					slog.Error("Error getting metric index", "metricName", metricName, "error", err)
-					return
+				if len(labelValuesToJoin) > 0 {
+					metricLabels[labelName] = strings.Join(labelValuesToJoin, ",")
 				}
-				// TODO: explain this branch
-				if metricIndex != -1 {
-					maps.Insert((*metricList)[metricIndex].Labels, maps.All(metricLabels))
-					return
-				}
-				metricValue = float64(1)
 			}
+
+			metricIndex, err := metricList.GetMetricIndex(metricName)
+			if err != nil {
+				slog.Error("Error getting metric index", "metricName", metricName, "error", err)
+				return
+			}
+			// TODO: explain this branch
+			if metricIndex != -1 {
+				maps.Insert((*metricList)[metricIndex].Labels, maps.All(metricLabels))
+				return
+			}
+			metricValue = float64(1)
 		default:
 			logMetricName := toSnakeCase(strings.Join(prefixes, "_"))
 			slog.Debug("Error: cannot format type as metric value", "kind", inputStructValue.Kind(), "metricName", logMetricName)

@@ -52,8 +52,10 @@ Port detection settings:
   --discover-ports-regexp=.+
     Only discover ports with names matching this regexp
 
-Absent metrics settings:
+Metrics processing settings:
   --keep-absent-metrics
     Set 'Nan' value for every metric that was not found
+  --list-label-format=multi-label
+    How to transform lists of strings to prometheus labels. Possible values are: single-label, multi-label, both
 
 `

@@ -55,10 +55,12 @@ var (
 	// Detect aliases and naming types?
 	// FLAG GROUP END
 
-	// FLAG GROUP START: Absent metrics settings
+	// FLAG GROUP START: Metrics processing settings
 	// Absent metrics (*float64 nil) behavior
 	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
 	// Maybe they should be per-module?
 	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that was not found").Default("false").Bool()
+	listLabelFormat   = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
+	// .Default("false").Bool()
 	// FLAG GROUP END
 )

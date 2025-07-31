@@ -15,7 +15,6 @@ import (
 	"github.com/newrushbolt/go-ethtool-exporter/collector"
 	"github.com/newrushbolt/go-ethtool-exporter/interfaces"
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
-
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/module_info"
@@ -91,9 +90,6 @@ func collectAllMetrics() map[string]registry.Registry {
 	}
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
 
-	// TODO: allow parallel gather
-	// TODO: split into different functions, probably move to other pkg
-
 	// Format configs
 	genericinfoConfig := generic_info.CollectConfig{
 		CollectAdvertisedSettings: *collectGenericInfoModes,
@@ -120,9 +116,11 @@ func collectAllMetrics() map[string]registry.Registry {
 		EthtoolPath:       *ethtoolPath,
 		EthtoolTimeout:    *ethtoolTimeout,
 		KeepAbsentMetrics: *keepAbsentMetrics,
+		ListLabelFormat:   *listLabelFormat,
 	}
 
 	for _, interfaceName := range interfaces {
+		// TODO: allow parallel gather
 		interfaceRegistry := collector.CollectInterfaceMetrics(interfaceName, collectorConfig)
 		allMetricRegistries[interfaceName] = interfaceRegistry
 	}
