@@ -12,19 +12,9 @@ There are a lot of scenarios when ports could be discovered by having a specific
 There are several options, but if you have another scenario, don't hesitate to introduce it via a pull-request.  
 Or just drop a Github issue with info about your discovery scenario, if you are not into Golang.
 
-```
-Port detection settings:
-  --discover-allowed-port-types=1,
-    Comma-separated list of allowed interface types (see if_arp.h). Set to empty ('') to allow all port types
-  --discover-all-ports
-    Discover all ports, ignoring all the other discover flags, EXCEPT for 'discover-allowed-port-types' and 'discover-ports-regexp'
-  --no-discover-bond-slaves
-    Whether we discover ports that are enslaved by bonds
-  --discover-ports-regexp=.*
-    Only discover ports with names matching this regex
-```
+Read avaliable port-discovery-options in [auto-generated usage](exporter_help.go).
 
-As the last resort, you can always use `--discover-ports-regex` together with `--discover-all-ports --discover-allowed-port-types=""`.  
+As the last resort, you can always use `--discover-ports-regex` together with `--discover-all-ports`.  
 But this is the least preferable and the least tested option.
 
 To only test discovery logic, you can run exporter with `discover-ports` command:

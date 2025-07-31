@@ -12,9 +12,10 @@ import (
 )
 
 type PortDiscoveryOptions struct {
-	PortsRegexp        *regexp.Regexp
-	DiscoverAllPorts   bool
-	DiscoverBondSlaves bool
+	PortsRegexp          *regexp.Regexp
+	DiscoverAllPorts     bool
+	DiscoverBondSlaves   bool
+	DiscoverBridgeSlaves bool
 	// TODO: filter out ovs ports by reading link, eg `/sys/class/net/tap2473528a-b1/master -> ../ovs-system`
 }
 
@@ -43,19 +44,27 @@ func isInterfaceTypeValid(devicePath string, allowedInterfaceTypes []int) bool {
 
 func isInterfaceBondSlave(devicePath string) bool {
 	slaveStatePath := path.Join(devicePath, "bonding_slave/state")
-	if _, err := os.Stat(slaveStatePath); os.IsNotExist(err) {
-		slog.Debug("Device is not a bond slave, skipping", "devicePath", devicePath)
+	// TODO: better check of file state (symlink, dir, etc) and maybe dumb read
+	_, err := os.Stat(slaveStatePath)
+	if os.IsNotExist(err) {
+		slog.Debug("Device is not a bond slave", "devicePath", devicePath)
 		return false
 	} else if err != nil {
 		slog.Warn("Device slave status file cannot be accessed", "devicePath", devicePath, "error", err)
 		return false
 	}
+	return true
+}
 
-	_, err := os.ReadFile(slaveStatePath)
-	// Hard to cover by unit tests, because it would require to brake\overflow the filesystem, or mock the os.File
-	//coverage:ignore
-	if err != nil {
-		slog.Warn("Cannot read device bond slave", "devicePath", devicePath, "error", err)
+func isInterfaceBridgeSlave(devicePath string) bool {
+	bridgeFlagsPath := path.Join(devicePath, "brport/bridge/type")
+	// TODO: better check of file state (symlink, dir, etc) and maybe dumb read
+	_, err := os.Stat(bridgeFlagsPath)
+	if os.IsNotExist(err) {
+		slog.Debug("Device is not a bridge slave", "devicePath", devicePath)
+		return false
+	} else if err != nil {
+		slog.Warn("Device bridge slave status file cannot be accessed", "devicePath", devicePath, "error", err)
 		return false
 	}
 	return true
@@ -100,17 +109,28 @@ func GetInterfacesList(netClassDirectory string, portDetectionOptions PortDiscov
 		portShouldBeAdded := false
 		if portDetectionOptions.DiscoverAllPorts {
 			portShouldBeAdded = true
-		} else if portDetectionOptions.DiscoverBondSlaves {
-			if isInterfaceBondSlave(interfacePath) {
-				portShouldBeAdded = true
-			} else {
-				slog.Debug("Not a bonded port, skipping", "deviceName", deviceName)
+		} else {
+			if portDetectionOptions.DiscoverBondSlaves {
+				if isInterfaceBondSlave(interfacePath) {
+					portShouldBeAdded = true
+				} else {
+					slog.Debug("Not a bonded port", "deviceName", deviceName)
+				}
+			}
+			if portDetectionOptions.DiscoverBridgeSlaves {
+				if isInterfaceBridgeSlave(interfacePath) {
+					portShouldBeAdded = true
+				} else {
+					slog.Debug("Not a bridged port", "deviceName", deviceName)
+				}
 			}
 		}
 
 		if portShouldBeAdded {
-			slog.Debug("Port passed all filters, adding to final list", "deviceName", deviceName)
+			slog.Debug("Port passed one of filters, adding to final list", "deviceName", deviceName)
 			resultInterfaces = append(resultInterfaces, deviceName)
+		} else {
+			slog.Debug("Port haven't passed any of filters, skipping", "deviceName", deviceName)
 		}
 	}
 	slog.Debug("Discovered following interfaces", "interfaces", resultInterfaces)

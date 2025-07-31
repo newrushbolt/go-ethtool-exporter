@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 89.1
+  COVERAGE_THRESHOLD: 89.9
 
 jobs:
   test:
@@ -36,7 +36,7 @@ jobs:
       - name: Get coverage filtering package
         run: go install github.com/quantumcycle/go-ignore-cov@v0.6.1
       - name: Filter coverage
-        run: go-ignore-cov --file coverage.out
+        run: go-ignore-cov -v --file coverage.out
       - name: Show coverage report per-function
         run: go tool cover -func coverage.out
       - name: Check total coverage threshold
