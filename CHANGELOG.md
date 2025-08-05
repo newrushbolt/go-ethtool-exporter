@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.0.11](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.10...v0.0.11) (2025-08-05)
+
+
+### Bug Fixes
+
+* allow collecting ALL metrics ([5c279c1](https://github.com/newrushbolt/go-ethtool-exporter/commit/5c279c10d36cb4bc21b053cbd0b8d5e6438e7425))
+* allow presenting arrays as several labels ([fdfe443](https://github.com/newrushbolt/go-ethtool-exporter/commit/fdfe44304cc22185080d9f00360f09a0bd76355e))
+* correct speed in bits and bytes ([77484e9](https://github.com/newrushbolt/go-ethtool-exporter/commit/77484e91bc36cee688ee0078a949aa1fcaab14d5))
+* discover bridge slaves ([a8b6b90](https://github.com/newrushbolt/go-ethtool-exporter/commit/a8b6b9037a34175c2711cbba67454b9009bf7493))
+* implement regex filtering ([60dd7c7](https://github.com/newrushbolt/go-ethtool-exporter/commit/60dd7c73c6a44370d7319956237bad20a03fbc1e))
+
 ## [0.0.10](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.9...v0.0.10) (2025-07-24)
 
 
