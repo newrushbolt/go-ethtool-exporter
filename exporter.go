@@ -80,7 +80,8 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 	return strings.Join(versionLines, "\n")
 }
 
-func collectAllMetrics() map[string]registry.Registry {
+// TODO: to be covered by some kind of tests
+func collectMetrics() map[string]registry.Registry {
 	allMetricRegistries := map[string]registry.Registry{}
 
 	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
@@ -179,7 +180,7 @@ func runDiscoverPortsCommand() {
 func runSingleTextfileCommand() {
 	// Single textfile mode
 	MustDirectoryExist(textfileDirectory)
-	metricRegistries := collectAllMetrics()
+	metricRegistries := collectMetrics()
 	writeAllMetricsToTextfiles(metricRegistries)
 }
 
@@ -187,13 +188,14 @@ func runLoopTextfileCommand() {
 	// Loop textfile mode
 	MustDirectoryExist(textfileDirectory)
 	for {
-		metricRegistries := collectAllMetrics()
+		metricRegistries := collectMetrics()
 		writeAllMetricsToTextfiles(metricRegistries)
 		time.Sleep(*loopTextfileUpdateInterval)
 	}
 }
 
 func main() {
+	// Covering main() is really hard. Moving logic toward separate function(s) is a better solution
 	slog.Info("Starting go-ethtool-exporter")
 
 	for _, arg := range os.Args[1:] {
@@ -205,6 +207,19 @@ func main() {
 
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	exporterCommand := kingpin.Parse()
+
+	if *collectAllMetrics {
+		slog.Warn("Flag --collect-all-metrics is set, ignoring all other --collect-* flags")
+		// TODO: find better solution because manually adding flags to this block is not fun
+		*collectGenericInfoSettings = true
+		*collectDriverInfoCommon = true
+		*collectModuleInfoDiagnosticsAlarms = true
+		*collectModuleInfoDiagnosticsWarnings = true
+		*collectDriverInfoFeatures = true
+		*collectGenericInfoModes = true
+		*collectModuleInfoDiagnosticsValues = true
+		*collectModuleInfoVendor = true
+	}
 
 	switch exporterCommand {
 	case discoverPortsCommand.FullCommand():

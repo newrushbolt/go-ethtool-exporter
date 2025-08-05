@@ -36,6 +36,7 @@ var (
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, disabled by default
+	collectAllMetrics                  = kingpin.Flag("collect-all-metrics", "Ignores all the flags below, usefull for testing").Default("false").Bool()
 	collectDriverInfoFeatures          = kingpin.Flag("collect-driver-info-features", "").Default("false").Bool()
 	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
 	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
@@ -61,6 +62,5 @@ var (
 	// Maybe they should be per-module?
 	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that was not found").Default("false").Bool()
 	listLabelFormat   = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
-	// .Default("false").Bool()
 	// FLAG GROUP END
 )

@@ -35,6 +35,8 @@ Collectors, enabled by default:
   --no-collect-module-info-diagnostics-warnings
 
 Collectors, disabled by default:
+  --collect-all-metrics
+    Ignores all the flags below, usefull for testing
   --collect-driver-info-features
   --collect-generic-info-modes
   --collect-module-info-diagnostics-values
