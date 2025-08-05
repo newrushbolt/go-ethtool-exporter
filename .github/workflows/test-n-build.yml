@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 90.7
+  COVERAGE_THRESHOLD: 88.8
 
 jobs:
   test:
@@ -39,6 +39,7 @@ jobs:
         run: go-ignore-cov -v --file coverage.out
       - name: Show coverage report per-function
         run: go tool cover -func coverage.out
+      # TODO: fix quantumcycle/go-ignore-cov the way it could ignore whole functions
       - name: Check total coverage threshold
         run: |
               echo "Coverage threshold: $COVERAGE_THRESHOLD %"
