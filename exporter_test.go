@@ -1,9 +1,14 @@
 package main
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"testing"
+	"time"
 
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
 
@@ -64,8 +69,7 @@ func TestExporterVersionBuildInfoError(t *testing.T) {
 }
 
 func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
-	expectedMetrics := `
-dummy_metric{foo="bar"} 42`
+	expectedMetrics := `dummy_metric{foo="bar"} 42`
 	dir := t.TempDir()
 	textfileDirectory = &dir // override global pointer for test
 
@@ -100,4 +104,57 @@ func TestExporterDirectoryMustExist(t *testing.T) {
 
 	notDir := "testdata/interfaces/sys/class/net/broken_interface"
 	assert.Panics(t, func() { MustDirectoryExist(&notDir) })
+}
+
+func ptr[T any](v T) *T { return &v }
+
+func setupHttpHandlerFlags(t *testing.T) {
+	// Override global params for test
+	portsRegexp := regexp.MustCompile("eth4")
+	discoverPortsRegexp = &portsRegexp
+	ethtoolPath = ptr("testdata/ethtool.sh")
+	linuxNetClassPath = ptr("testdata/interfaces/sys/class/net")
+	discoverAllowedPortTypes = ptr("1,")
+	discoverAllPorts = ptr(true)
+	discoverBondSlaves = ptr(false)
+	discoverBridgeSlaves = ptr(false)
+	collectGenericInfoModes = ptr(true)
+	collectGenericInfoSettings = ptr(true)
+	collectDriverInfoCommon = ptr(false)
+	collectDriverInfoFeatures = ptr(false)
+	collectModuleInfoDiagnosticsAlarms = ptr(false)
+	collectModuleInfoDiagnosticsWarnings = ptr(false)
+	collectModuleInfoDiagnosticsValues = ptr(false)
+	collectModuleInfoVendor = ptr(false)
+	keepAbsentMetrics = ptr(false)
+	listLabelFormat = ptr("single-label")
+	textfileDirectory = ptr(t.TempDir())
+	ethtoolTimeout = ptr(time.Second * 5)
+	loopTextfileUpdateInterval = ptr(time.Second)
+}
+
+func TestExporterHttpMetricsHandler(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	metricsHandler(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "text/plain; version=0.0.4; charset=utf-8; escaping=underscores", resp.Header.Get("Content-Type"))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+
+	expectedBytes, err := os.ReadFile("testdata/eth4.generic_info.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetricResult := string(expectedBytes)
+	assert.Equal(t, expectedMetricResult, string(body))
 }

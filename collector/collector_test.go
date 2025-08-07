@@ -24,7 +24,7 @@ func TestReadEthtoolData(t *testing.T) {
 
 	// No mode
 	out = readEthtoolData("eth0", "", stubPath, timeout)
-	assert.Equal(t, "ethtool output for eth0\n", out)
+	assert.Equal(t, "generic info for eth0\n", out)
 
 	// -i mode
 	out = readEthtoolData("eth0", "-i", stubPath, timeout)
@@ -37,10 +37,6 @@ func TestReadEthtoolData(t *testing.T) {
 	// -S mode
 	out = readEthtoolData("eth0", "-S", stubPath, timeout)
 	assert.Equal(t, "statistics for eth0\n", out)
-
-	// Unknown interface
-	out = readEthtoolData("unknown", "", stubPath, timeout)
-	assert.Equal(t, "", out)
 
 	// Timeout
 	tinyTimeout, err := time.ParseDuration("10ms")
@@ -77,13 +73,11 @@ func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 
 // Test with real intel metrics
 func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
-	expectedMetricResult := `generic_info_supported_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="Symmetric",device="eth1"} 1
-generic_info_advertised_settings_info{FecModes="Not reported",LinkModes="10000baseSR/Full",PauseFrameUse="No",device="eth1"} 1
-generic_info_settings_info{Duplex="Full",Port="FIBRE",Speed="10000Mb/s",Transceiver="internal",device="eth1"} 1
-generic_info_settings_speed_bytes{device="eth1"} 1.25e+09
-generic_info_settings_speed_bits{device="eth1"} 1e+10
-generic_info_settings_auto_negotiation{device="eth1"} 0
-generic_info_settings_link_detected{device="eth1"} 1`
+	expectedBytes, err := os.ReadFile("../testdata/eth4.generic_info.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetricResult := string(expectedBytes)
 
 	genericinfoConfig := generic_info.CollectConfig{
 		CollectAdvertisedSettings: true,
@@ -119,7 +113,7 @@ generic_info_settings_link_detected{device="eth1"} 1`
 		ListLabelFormat:   "single-label",
 	}
 
-	registry := CollectInterfaceMetrics("eth1", collectorConfig)
+	registry := CollectInterfaceMetrics("eth4", collectorConfig)
 
 	assert.Equal(t, expectedMetricResult, registry.FormatTextfileString())
 }

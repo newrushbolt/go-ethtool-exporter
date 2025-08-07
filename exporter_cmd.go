@@ -17,6 +17,14 @@ var (
 	loopTextfileCommand        = kingpin.Command("loop-textfile", "Writes all metrics to textfile every loop-interval")
 	loopTextfileUpdateInterval = loopTextfileCommand.Flag("loop-textfile-update-interval", "Interval between textfile updates").Default("30s").Duration()
 
+	httpServerCommand = kingpin.Command("http-server", "Starts HTTP server of scraping metrics over HTTP(S), like node-exporter does")
+	httpListenAddress = httpServerCommand.Flag("web.listen-address", "Address on which to expose metrics").Default(":9417").String()
+	// Without caching it seems like 2 requests is enough. And +1 for /health method
+	httpMaxRequests = httpServerCommand.Flag("web.max-requests", "Maximum number of concurrent HTTP requests").Default("3").Int()
+	// TODO: implement http server params, such as
+	// - inmemory metric cache and it's max ttl
+	// - TLS-related stuff
+
 	// TODO: add env support???
 	// FLAG GROUP START: Ethtool settings
 	ethtoolPath    = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
