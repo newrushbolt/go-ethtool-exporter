@@ -7,6 +7,14 @@ Commands:
 
 discover-ports:
   Show discovered ports and exit
+http-server:
+  Starts HTTP server of scraping metrics over HTTP(S), like node-exporter does
+    --web.listen-address=:9417
+        Address on which to expose metrics
+
+    --web.max-requests=3
+        Maximum number of concurrent HTTP requests
+
 loop-textfile:
   Writes all metrics to textfile every loop-interval
     --loop-textfile-update-interval=30s

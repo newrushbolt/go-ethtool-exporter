@@ -8,7 +8,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alecthomas/kingpin/v2"
 
@@ -29,6 +28,17 @@ func initLogger() {
 		level = slog.LevelInfo
 	}
 	slog.SetLogLoggerLevel(level)
+}
+
+// Composes PortDiscoveryOptions from kingpin cmd options
+func createDiscoveryConfig() (config interfaces.PortDiscoveryOptions) {
+	config = interfaces.PortDiscoveryOptions{
+		PortsRegexp:          *discoverPortsRegexp,
+		DiscoverAllPorts:     *discoverAllPorts,
+		DiscoverBondSlaves:   *discoverBondSlaves,
+		DiscoverBridgeSlaves: *discoverBridgeSlaves,
+	}
+	return
 }
 
 func parseAllowedInterfaceTypes(typesStr string) []int {
@@ -81,14 +91,11 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 }
 
 // TODO: to be covered by some kind of tests
-func collectMetrics() map[string]registry.Registry {
-	allMetricRegistries := map[string]registry.Registry{}
+func collectMetrics() registry.RegistryCollection {
+	allMetricRegistries := registry.RegistryCollection{}
 
 	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
-	discoverConfig := interfaces.PortDiscoveryOptions{
-		DiscoverAllPorts:   *discoverAllPorts,
-		DiscoverBondSlaves: *discoverBondSlaves,
-	}
+	discoverConfig := createDiscoveryConfig()
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
 
 	// Format configs
@@ -129,16 +136,10 @@ func collectMetrics() map[string]registry.Registry {
 	return allMetricRegistries
 }
 
-func writeAllMetricsToTextfiles(metricRegistries map[string]registry.Registry) {
-	allMetrics := make([]string, len(metricRegistries))
+func writeAllMetricsToTextfiles(metricRegistries registry.RegistryCollection) {
 	textFileName := "ethtool_exporter.prom"
 	textFilePath := path.Join(*textfileDirectory, textFileName)
-	for _, metricRegistry := range metricRegistries {
-		// Writing file in node_exporter textfile format
-		metrics := metricRegistry.FormatTextfileString()
-		allMetrics = append(allMetrics, metrics)
-	}
-	allMetricsString := strings.Join(allMetrics, "\n")
+	allMetricsString := metricRegistries.GetAllMetricsText()
 	registry.MustWriteTextfile(textFilePath, allMetricsString)
 }
 
@@ -156,42 +157,6 @@ func MustDirectoryExist(dirPath *string) {
 func init() {
 	// Moved to separate `init()` in order to work both in exporter and tests
 	initLogger()
-}
-
-func runDiscoverPortsCommand() {
-	// Discover ports mode
-	allowedTypes := parseAllowedInterfaceTypes(*discoverAllowedPortTypes)
-	discoverConfig := interfaces.PortDiscoveryOptions{
-		PortsRegexp:          *discoverPortsRegexp,
-		DiscoverAllPorts:     *discoverAllPorts,
-		DiscoverBondSlaves:   *discoverBondSlaves,
-		DiscoverBridgeSlaves: *discoverBridgeSlaves,
-	}
-	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
-	if len(interfaces) == 0 {
-		fmt.Println("No ports discovered, re-run with `GO_ETHTOOL_EXPORTER_LOG_LEVEL=DEBUG` to check the discovery logic")
-	} else {
-		fmt.Println("Discovered following ports:")
-		interfacesString := fmt.Sprintf("  - %s", strings.Join(interfaces, "\n  - "))
-		fmt.Println(interfacesString)
-	}
-}
-
-func runSingleTextfileCommand() {
-	// Single textfile mode
-	MustDirectoryExist(textfileDirectory)
-	metricRegistries := collectMetrics()
-	writeAllMetricsToTextfiles(metricRegistries)
-}
-
-func runLoopTextfileCommand() {
-	// Loop textfile mode
-	MustDirectoryExist(textfileDirectory)
-	for {
-		metricRegistries := collectMetrics()
-		writeAllMetricsToTextfiles(metricRegistries)
-		time.Sleep(*loopTextfileUpdateInterval)
-	}
 }
 
 func main() {
@@ -228,6 +193,8 @@ func main() {
 		runSingleTextfileCommand()
 	case loopTextfileCommand.FullCommand():
 		runLoopTextfileCommand()
+	case httpServerCommand.FullCommand():
+		runHttpServerCommand()
 	default:
 		panicMessage := fmt.Sprintf("Unknown command: %s", exporterCommand)
 		panic(panicMessage)

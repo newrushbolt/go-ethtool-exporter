@@ -88,7 +88,7 @@ func extractFlagInfo(expr ast.Expr) (name, description, defaultValue, flagType s
 		methodName := selectorExpr.Sel.Name
 
 		switch methodName {
-		case "String", "Bool", "Duration", "Regexp", "ExistingFile", "ExistingDir":
+		case "String", "Bool", "Duration", "Regexp", "ExistingFile", "ExistingDir", "Int":
 			flagType = methodName
 		case "Enum":
 			enumValues := []string{}
@@ -125,7 +125,8 @@ func extractFlagInfo(expr ast.Expr) (name, description, defaultValue, flagType s
 			description += extraDescription
 			return // Found the Flag call, we have all info
 		default:
-			slog.Error("Skipping unknown kingpin method", "methodName", methodName)
+			slog.Error("Unknown kingpin method, exiting", "methodName", methodName)
+			os.Exit(1)
 		}
 		currentExpr = selectorExpr.X // Move to the receiver of the current method call
 	}
