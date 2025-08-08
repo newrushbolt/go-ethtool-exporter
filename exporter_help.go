@@ -44,7 +44,7 @@ Collectors, enabled by default:
 
 Collectors, disabled by default:
   --collect-all-metrics
-    Ignores all the flags below, usefull for testing
+    Ignores all the flags below. Usefull for testing
   --collect-driver-info-features
   --collect-generic-info-modes
   --collect-module-info-diagnostics-values
