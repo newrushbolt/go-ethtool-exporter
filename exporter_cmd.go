@@ -27,13 +27,13 @@ var (
 
 	// TODO: add env support???
 	// FLAG GROUP START: Ethtool settings
-	ethtoolPath    = kingpin.Flag("ethtool-path", "").Default("/usr/sbin/ethtool").ExistingFile()
+	ethtoolPath    = kingpin.Flag("path.ethtool", "").Default("/usr/sbin/ethtool").ExistingFile()
 	ethtoolTimeout = kingpin.Flag("ethtool-timeout", "Timeout for ethtool command execution.").Default("5s").Duration()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Various paths settings
-	linuxNetClassPath = kingpin.Flag("linux-net-class-path", "").Default("/sys/class/net").ExistingDir()
-	textfileDirectory = kingpin.Flag("textfile-directory", "Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
+	linuxNetClassPath = kingpin.Flag("path.sysfs.net.class", "").Default("/sys/class/net").ExistingDir()
+	textfileDirectory = kingpin.Flag("path.textfile-directory", "Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, enabled by default
@@ -44,7 +44,7 @@ var (
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, disabled by default
-	collectAllMetrics                  = kingpin.Flag("collect-all-metrics", "Ignores all the flags below, usefull for testing").Default("false").Bool()
+	collectAllMetrics                  = kingpin.Flag("collect-all-metrics", "Ignores all the flags below. Usefull for testing").Default("false").Bool()
 	collectDriverInfoFeatures          = kingpin.Flag("collect-driver-info-features", "").Default("false").Bool()
 	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
 	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()

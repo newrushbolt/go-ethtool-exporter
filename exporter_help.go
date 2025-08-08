@@ -27,13 +27,13 @@ single-textfile:
 Flags:
 
 Ethtool settings:
-  --ethtool-path=/usr/sbin/ethtool
+  --path.ethtool=/usr/sbin/ethtool
   --ethtool-timeout=5s
     Timeout for ethtool command execution.
 
 Various paths settings:
-  --linux-net-class-path=/sys/class/net
-  --textfile-directory=/var/lib/node-exporter/textfiles
+  --path.sysfs.net.class=/sys/class/net
+  --path.textfile-directory=/var/lib/node-exporter/textfiles
     Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes
 
 Collectors, enabled by default:
