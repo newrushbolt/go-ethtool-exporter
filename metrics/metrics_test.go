@@ -144,16 +144,18 @@ func TestMetricListFromStructsMetricIndexError(t *testing.T) {
 }
 
 func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
-	expectedResultMultilabel := `info{DriverName="test_driver",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
-	expectedResultBoth := `info{DriverName="test_driver",FirmwareVersionParts="version_p1,version_p2",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
+	expectedResultMultilabel := `info{DriverName="test_driver",DriverNameWithSpace="test driver",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
+	expectedResultBoth := `info{DriverName="test_driver",DriverNameWithSpace="test driver",FirmwareVersionParts="version_p1,version_p2",FirmwareVersionPartsP0="version_p1",FirmwareVersionPartsP1="version_p2"} 1`
 
 	type DriverInfo struct {
 		DriverName           string
+		DriverNameWithSpace  string
 		FirmwareVersionParts []string
 	}
 
 	driverInfo := DriverInfo{
-		DriverName: "test_driver",
+		DriverName:          "test_driver",
+		DriverNameWithSpace: "test driver",
 		FirmwareVersionParts: []string{
 			"version_p1",
 			"version_p2",
@@ -175,46 +177,7 @@ func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
 }
 
 // Just a snippet for fast testing with real metrics
-
 // func TestRealIntelMetrics(t *testing.T) {
-
 // 	interfaces := map[string]string{
 // 		"eth0": "intel/i40e/00_sfp_10g_sr85",
 // 	}
-
-// 	for _, interfacePath := range interfaces {
-// 		t.Run(interfacePath, func(t *testing.T) {
-// 			metricRegistry := registry{}
-
-// 			// statistics
-// 			metricType := "statistics"
-// 			fixtureSourcePath := fmt.Sprintf("../../go-ethtool-metrics/testdata/%s/src/%s", interfacePath, metricType)
-// 			fixtureSourceData, err := os.ReadFile(fixtureSourcePath)
-// 			if err != nil {
-// 				panicErr := fmt.Errorf("Cannot read fixture file: %v", err)
-// 				panic(panicErr)
-// 			}
-// 			statisticsDataRaw := string(fixtureSourceData)
-// 			statisticsConfig := statistics.CollectConfig{}.Default()
-// 			statisticsData := statistics.ParseInfo(statisticsDataRaw, statisticsConfig)
-// 			MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, map[string]string{})
-
-// 			// driver_info
-// 			driverInfoConfig := driver_info.CollectConfig{
-// 				DriverFeatures: true,
-// 			}
-// 			metricType = "driver_info"
-// 			fixtureSourcePath = fmt.Sprintf("../../go-ethtool-metrics/testdata/%s/src/%s", interfacePath, metricType)
-// 			fixtureSourceData, err = os.ReadFile(fixtureSourcePath)
-// 			if err != nil {
-// 				panicErr := fmt.Errorf("Cannot read fixture file: %v", err)
-// 				panic(panicErr)
-// 			}
-// 			driverInfoDataRaw := string(fixtureSourceData)
-// 			driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &driverInfoConfig)
-// 			MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, map[string]string{})
-
-// 			fmt.Printf("Total metrics: %+v", metricRegistry)
-// 		})
-// 	}
-// }

@@ -5,4 +5,4 @@ RUN apk add --no-cache ethtool iproute2
 ADD go-ethtool-exporter /go-ethtool-exporter
 
 ENTRYPOINT ["/go-ethtool-exporter"]
-CMD ["--discover-all-ports", "http-server"]
+CMD ["--discover-all-ports", "--collect-all-metrics", "http-server"]

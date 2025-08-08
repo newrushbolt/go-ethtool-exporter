@@ -158,3 +158,58 @@ func TestExporterHttpMetricsHandler(t *testing.T) {
 	expectedMetricResult := string(expectedBytes)
 	assert.Equal(t, expectedMetricResult, string(body))
 }
+
+func TestExporterHttpMetricsHandlerFail(t *testing.T) {
+	setupHttpHandlerFlags(t)
+	linuxNetClassPath = ptr("non_existent_testdata/interfaces/sys/class/net")
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	metricsHandler(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, "text/plain; charset=utf-8", resp.Header.Get("Content-Type"))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+
+	expectedMetricResult := "Internal Server Error\n"
+	assert.Equal(t, expectedMetricResult, string(body))
+}
+
+type errorWriter struct {
+	http.ResponseWriter
+}
+
+func (ew *errorWriter) Write(b []byte) (int, error) {
+	return 0, io.ErrClosedPipe
+}
+func (ew *errorWriter) Header() http.Header {
+	return ew.ResponseWriter.Header()
+}
+func (ew *errorWriter) WriteHeader(statusCode int) {
+	ew.ResponseWriter.WriteHeader(statusCode)
+}
+
+func TestExporterHttpMetricsHandlerWriteError(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	errWriter := &errorWriter{recorder}
+	req := httptest.NewRequest("GET", "/metrics", nil)
+
+	metricsHandler(errWriter, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "", string(body))
+}
