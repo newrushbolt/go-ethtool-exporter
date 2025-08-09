@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"regexp"
 	"runtime/debug"
 	"testing"
@@ -212,4 +213,27 @@ func TestExporterHttpMetricsHandlerWriteError(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "", string(body))
+}
+
+func TestExporterSingleTextfile(t *testing.T) {
+	setupHttpHandlerFlags(t)
+	var err error
+	*textfileDirectory, err = os.MkdirTemp(".", ".test-textfiles-*")
+	defer os.RemoveAll(*textfileDirectory)
+	assert.NoError(t, err)
+	runSingleTextfileCommand()
+
+	expectedMetricBytes, err := os.ReadFile("testdata/eth4.generic_info.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetric := string(expectedMetricBytes)
+
+	resultedMetricsBytes, err := os.ReadFile(path.Join(*textfileDirectory, "ethtool_exporter.prom"))
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	resultedMetrics := string(resultedMetricsBytes)
+
+	assert.Equal(t, expectedMetric, resultedMetrics)
 }

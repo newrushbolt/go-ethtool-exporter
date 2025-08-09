@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 86.5
+  COVERAGE_THRESHOLD: 87.8
 
 jobs:
   test:
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Run tests
-        run: go test ./... -coverprofile coverage.out
+        run: go test ./... -coverpkg ./... -coverprofile coverage.out
 
       - name: Check if auto-generated "--help" is up to date
         run: |
