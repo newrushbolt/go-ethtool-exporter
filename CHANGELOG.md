@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.12](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.11...v0.0.12) (2025-08-09)
+
+
+### Bug Fixes
+
+* allow scraping metrics over http ([1990b80](https://github.com/newrushbolt/go-ethtool-exporter/commit/1990b801235ca4b9786d3bad7319034063a9a07f))
+* CLI flags more similar to node_exporter ([0721081](https://github.com/newrushbolt/go-ethtool-exporter/commit/072108153f41c853c64ec4de76a9ccce6af6714e))
+* dont split regular string ([ad681be](https://github.com/newrushbolt/go-ethtool-exporter/commit/ad681be7acd45328094713cb1e8b38e2b6617416))
+
+
+### Miscellaneous Chores
+
+* better coverage ([8a1fbe6](https://github.com/newrushbolt/go-ethtool-exporter/commit/8a1fbe6be05d1834ecc95cfe0324f954587b20f2))
+
 ## [0.0.11](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.10...v0.0.11) (2025-08-05)
 
 
