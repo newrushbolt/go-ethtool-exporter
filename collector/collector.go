@@ -58,41 +58,64 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 		"device": interfaceName,
 	}
 
+	// TODO: find a way to keep code below DRY
+	// This will probably require us to make some generic type for collection configs and returned data structures :harold:
+	//
 	// generic_info
-	interfaceLogger.Debug("generic_info: collecting metrics")
-	genericInfoDataRaw := readEthtoolData(interfaceName, "", config.EthtoolPath, config.EthtoolTimeout)
-	interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
-	genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &config.GenericInfo)
-	before := len(metricRegistry)
-	metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
-	interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
+	collectGenericInfo := config.GenericInfo.CollectAdvertisedSettings || config.GenericInfo.CollectSupportedSettings || config.GenericInfo.CollectSettings
+	if collectGenericInfo {
+		interfaceLogger.Debug("generic_info: collecting metrics")
+		genericInfoDataRaw := readEthtoolData(interfaceName, "", config.EthtoolPath, config.EthtoolTimeout)
+		interfaceLogger.Debug("generic_info: raw lines", "lines", strings.Count(genericInfoDataRaw, "\n"))
+		genericInfoData := generic_info.ParseInfo(genericInfoDataRaw, &config.GenericInfo)
+		before := len(metricRegistry)
+		metrics.MetricListFromStructs(genericInfoData, &metricRegistry, []string{"generic_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
+		interfaceLogger.Debug("generic_info: final metrics", "count", len(metricRegistry)-before)
+	} else {
+		interfaceLogger.Debug("generic_info metrics are disabled, skipping")
+	}
 
 	// driver_info
-	interfaceLogger.Debug("driver_info: collecting metrics")
-	driverInfoDataRaw := readEthtoolData(interfaceName, "-i", config.EthtoolPath, config.EthtoolTimeout)
-	interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
-	driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &config.DriverInfo)
-	before = len(metricRegistry)
-	metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
-	interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
+	collectDriverInfo := config.DriverInfo.CollectCommon || config.DriverInfo.CollectFeatures
+	if collectDriverInfo {
+		interfaceLogger.Debug("driver_info: collecting metrics")
+		driverInfoDataRaw := readEthtoolData(interfaceName, "-i", config.EthtoolPath, config.EthtoolTimeout)
+		interfaceLogger.Debug("driver_info: raw lines", "lines", strings.Count(driverInfoDataRaw, "\n"))
+		driverInfoData := driver_info.ParseInfo(driverInfoDataRaw, &config.DriverInfo)
+		before := len(metricRegistry)
+		metrics.MetricListFromStructs(driverInfoData, &metricRegistry, []string{"driver_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
+		interfaceLogger.Debug("driver_info: final metrics", "count", len(metricRegistry)-before)
+	} else {
+		interfaceLogger.Debug("driver_info metrics are disabled, skipping")
+	}
 
 	// module_info
-	interfaceLogger.Debug("module_info: collecting metrics")
-	moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", config.EthtoolPath, config.EthtoolTimeout)
-	interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
-	moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &config.ModuleInfo)
-	before = len(metricRegistry)
-	metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
-	interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
+	collectModuleInfo := config.ModuleInfo.CollectDiagnosticsAlarms || config.ModuleInfo.CollectDiagnosticsValues || config.ModuleInfo.CollectDiagnosticsWarnings || config.ModuleInfo.CollectVendor
+	if collectModuleInfo {
+		interfaceLogger.Debug("module_info: collecting metrics")
+		moduleInfoDataRaw := readEthtoolData(interfaceName, "-m", config.EthtoolPath, config.EthtoolTimeout)
+		interfaceLogger.Debug("module_info: raw lines", "lines", strings.Count(moduleInfoDataRaw, "\n"))
+		moduleInfoData := module_info.ParseInfo(moduleInfoDataRaw, &config.ModuleInfo)
+		before := len(metricRegistry)
+		metrics.MetricListFromStructs(moduleInfoData, &metricRegistry, []string{"module_info"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
+		interfaceLogger.Debug("module_info: final metrics", "count", len(metricRegistry)-before)
+	} else {
+		interfaceLogger.Debug("module_info metrics are disabled, skipping")
+	}
 
 	// statistics
-	interfaceLogger.Debug("statistics: collecting metrics")
-	statisticsDataRaw := readEthtoolData(interfaceName, "-S", config.EthtoolPath, config.EthtoolTimeout)
-	interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
-	statisticsData := statistics.ParseInfo(statisticsDataRaw, &config.Statistics)
-	before = len(metricRegistry)
-	metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
-	interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
+	collectStatistics := config.Statistics.General || config.Statistics.PerQueueGeneral || config.Statistics.PerQueuePerType
+	if collectStatistics {
+		interfaceLogger.Debug("statistics: collecting metrics")
+		statisticsDataRaw := readEthtoolData(interfaceName, "-S", config.EthtoolPath, config.EthtoolTimeout)
+		interfaceLogger.Debug("statistics: raw lines", "lines", strings.Count(statisticsDataRaw, "\n"))
+		statisticsData := statistics.ParseInfo(statisticsDataRaw, &config.Statistics)
+		before := len(metricRegistry)
+		metrics.MetricListFromStructs(statisticsData, &metricRegistry, []string{"statistics"}, deviceLabels, config.KeepAbsentMetrics, config.ListLabelFormat)
+		interfaceLogger.Debug("statistics: final metrics", "count", len(metricRegistry)-before)
+	} else {
+		interfaceLogger.Debug("module_info metrics are disabled, skipping")
+	}
 
 	interfaceLogger.Debug("Total metric count", "metricCount", len(metricRegistry))
 	return metricRegistry
