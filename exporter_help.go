@@ -65,9 +65,13 @@ Port detection settings:
   --discover-ports-regexp=.+
     Only discover ports with names matching this regexp
 
+Keep absent metrics, setting 'Nan' value for every metric that was not found:
+  --no-keep-absent-metrics-module-info
+  --keep-absent-metrics-generic-info
+  --keep-absent-metrics-driver-info
+  --keep-absent-metrics-statistics
+
 Metrics processing settings:
-  --keep-absent-metrics
-    Set 'Nan' value for every metric that was not found
   --no-statistics-generate-missing-per-queue-metrics
     Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)
   --list-label-format=multi-label
