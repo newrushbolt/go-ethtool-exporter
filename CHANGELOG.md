@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.13](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.12...v0.0.13) (2025-08-27)
+
+
+### Bug Fixes
+
+* better control over statistics module ([139d6c9](https://github.com/newrushbolt/go-ethtool-exporter/commit/139d6c99ddaa8b500ef2c1a21e12294aac81b7e7))
+* dont collect raw ethtool metrics when corresponding metrics are disabled ([3eb5645](https://github.com/newrushbolt/go-ethtool-exporter/commit/3eb5645ebbf4fc510b4525d7f2b8ab6c774e5155))
+* DRY collector code, set `keep-absent-metrics` per collector ([ebf66a0](https://github.com/newrushbolt/go-ethtool-exporter/commit/ebf66a0e49af9621f97f48d310c3db5129431d63))
+* more flexible per-queue metrics ([9633010](https://github.com/newrushbolt/go-ethtool-exporter/commit/96330102ae66b100eb24b4bc7c9e103f8f12a0a1))
+
 ## [0.0.12](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.11...v0.0.12) (2025-08-09)
 
 
