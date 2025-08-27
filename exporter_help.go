@@ -41,6 +41,7 @@ Collectors, enabled by default:
   --no-collect-driver-info-common
   --no-collect-module-info-diagnostics-alarms
   --no-collect-module-info-diagnostics-warnings
+  --no-collect-statistics-per-queue-general
 
 Collectors, disabled by default:
   --collect-all-metrics
@@ -49,6 +50,7 @@ Collectors, disabled by default:
   --collect-generic-info-modes
   --collect-module-info-diagnostics-values
   --collect-module-info-vendor
+  --collect-statistics-per-queue-per-type
 
 Port detection settings:
   --discover-allowed-port-types=1,
@@ -65,6 +67,8 @@ Port detection settings:
 Metrics processing settings:
   --keep-absent-metrics
     Set 'Nan' value for every metric that was not found
+  --no-statistics-generate-missing-per-queue-metrics
+    Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)
   --list-label-format=multi-label
     How to transform lists of strings to prometheus labels. Possible values are: single-label, multi-label, both
 

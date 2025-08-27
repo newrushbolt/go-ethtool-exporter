@@ -114,8 +114,12 @@ func collectMetrics() registry.RegistryCollection {
 		CollectDiagnosticsValues:   *collectModuleInfoDiagnosticsValues,
 		CollectVendor:              *collectModuleInfoVendor,
 	}
-	statisticsConfig := *(statistics.CollectConfig{}.Default())
-
+	statisticsConfig := statistics.CollectConfig{
+		General:                             true,
+		PerQueueGeneral:                     *collectStatisticsPerQueueGeneral,
+		PerQueuePerType:                     *collectStatisticsPerQueuePerType,
+		PerQueueGenerateMissingBytesMetrics: *statisticsGenerateMissingPerQueueMetrics,
+	}
 	collectorConfig := collector.CollectorConfig{
 		GenericInfo:       genericinfoConfig,
 		DriverInfo:        driverInfoConfig,

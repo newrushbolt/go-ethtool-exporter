@@ -72,7 +72,7 @@ prefprefix_driver_info_supported_feature_whatever{device="test_device"} 1
 prefprefix_device_data_device_index{device="test_device"} -1613.246008
 prefprefix_device_data_device_index32{device="test_device"} 1613
 prefprefix_device_data_device_uindex{device="test_device"} 1614
-prefprefix_per_qstats_tx_bytes{queue="0"} 123`
+prefprefix_per_qstats_general_tx_bytes{queue="0"} 123`
 	txBytesValue := 123.0
 
 	type DriverInfo struct {
@@ -101,10 +101,12 @@ prefprefix_per_qstats_tx_bytes{queue="0"} 123`
 		DeviceUIndex:  1614,
 	}
 
+	perQStatsPerQueue := statistics.QueueStatisticsGeneral{
+		TxBytes: &txBytesValue,
+	}
 	perQStats := statistics.PerQueueStatistics{
 		statistics.QueueStatistics{
-			TxBytes: &txBytesValue,
-			RxBytes: nil,
+			General: &perQStatsPerQueue,
 		},
 	}
 
