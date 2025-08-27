@@ -50,6 +50,7 @@ var (
 	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
 	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
 	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
+	collectStatisticsGeneral           = kingpin.Flag("collect-statistics-general", "").Default("false").Bool()
 	collectStatisticsPerQueuePerType   = kingpin.Flag("collect-statistics-per-queue-per-type", "").Default("false").Bool()
 	// FLAG GROUP END
 

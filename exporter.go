@@ -115,7 +115,7 @@ func collectMetrics() registry.RegistryCollection {
 		CollectVendor:              *collectModuleInfoVendor,
 	}
 	statisticsConfig := statistics.CollectConfig{
-		General:                             true,
+		General:                             *collectStatisticsGeneral,
 		PerQueueGeneral:                     *collectStatisticsPerQueueGeneral,
 		PerQueuePerType:                     *collectStatisticsPerQueuePerType,
 		PerQueueGenerateMissingBytesMetrics: *statisticsGenerateMissingPerQueueMetrics,
@@ -180,14 +180,17 @@ func main() {
 	if *collectAllMetrics {
 		slog.Warn("Flag --collect-all-metrics is set, ignoring all other --collect-* flags")
 		// TODO: find better solution because manually adding flags to this block is not fun
-		*collectGenericInfoSettings = true
 		*collectDriverInfoCommon = true
-		*collectModuleInfoDiagnosticsAlarms = true
-		*collectModuleInfoDiagnosticsWarnings = true
 		*collectDriverInfoFeatures = true
 		*collectGenericInfoModes = true
+		*collectGenericInfoSettings = true
+		*collectModuleInfoDiagnosticsAlarms = true
 		*collectModuleInfoDiagnosticsValues = true
+		*collectModuleInfoDiagnosticsWarnings = true
 		*collectModuleInfoVendor = true
+		*collectStatisticsGeneral = true
+		*collectStatisticsPerQueueGeneral = true
+		*collectStatisticsPerQueuePerType = true
 	}
 
 	switch exporterCommand {

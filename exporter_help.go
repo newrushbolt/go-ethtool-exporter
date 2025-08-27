@@ -50,6 +50,7 @@ Collectors, disabled by default:
   --collect-generic-info-modes
   --collect-module-info-diagnostics-values
   --collect-module-info-vendor
+  --collect-statistics-general
   --collect-statistics-per-queue-per-type
 
 Port detection settings:
