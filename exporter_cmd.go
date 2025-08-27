@@ -67,11 +67,16 @@ var (
 	// Detect aliases and naming types?
 	// FLAG GROUP END
 
-	// FLAG GROUP START: Metrics processing settings
+	// FLAG GROUP START: Keep absent metrics, setting 'Nan' value for every metric that was not found
 	// Absent metrics (*float64 nil) behavior
 	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
-	// Maybe they should be per-module?
-	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that was not found").Default("false").Bool()
+	keepAbsentMetricsModuleInfo  = kingpin.Flag("keep-absent-metrics-module-info", "").Default("true").Bool()
+	keepAbsentMetricsGenericInfo = kingpin.Flag("keep-absent-metrics-generic-info", "").Default("false").Bool()
+	keepAbsentMetricsDriverInfo  = kingpin.Flag("keep-absent-metrics-driver-info", "").Default("false").Bool()
+	keepAbsentMetricsStatistics  = kingpin.Flag("keep-absent-metrics-statistics", "").Default("false").Bool()
+	// FLAG GROUP END
+
+	// FLAG GROUP START: Metrics processing settings
 	// Check the metrics library for more info
 	// https://github.com/newrushbolt/go-ethtool-metrics/blob/9c84000a5e0736e721630447958639d09cc532d1/pkg/metrics/statistics/statistics_structs.go#L6
 	statisticsGenerateMissingPerQueueMetrics = kingpin.Flag("statistics-generate-missing-per-queue-metrics", "Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)").Default("true").Bool()

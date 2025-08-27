@@ -54,16 +54,18 @@ func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 
 	ethtoolPath := "../testdata/non_existed_ethtool.sh"
 	ethtoolTimeout := 1 * time.Second
-	keepAbsentMetrics := false
 
 	collectorConfig := CollectorConfig{
-		GenericInfo:       *genericinfoConfig,
-		DriverInfo:        *driverInfoConfig,
-		ModuleInfo:        *moduleInfoConfig,
-		Statistics:        *statisticsConfig,
-		EthtoolPath:       ethtoolPath,
-		EthtoolTimeout:    ethtoolTimeout,
-		KeepAbsentMetrics: keepAbsentMetrics,
+		GenericInfo:                  *genericinfoConfig,
+		DriverInfo:                   *driverInfoConfig,
+		ModuleInfo:                   *moduleInfoConfig,
+		Statistics:                   *statisticsConfig,
+		EthtoolPath:                  ethtoolPath,
+		EthtoolTimeout:               ethtoolTimeout,
+		KeepAbsentMetricsModuleInfo:  false,
+		KeepAbsentMetricsGenericInfo: false,
+		KeepAbsentMetricsDriverInfo:  false,
+		KeepAbsentMetricsStatistics:  false,
 	}
 
 	registry := CollectInterfaceMetrics("eth0", collectorConfig)
@@ -102,17 +104,19 @@ func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 	}
 	ethtoolPath := "../testdata/ethtool.sh"
 	ethtoolTimeout := 1 * time.Second
-	keepAbsentMetrics := false
 
 	collectorConfig := CollectorConfig{
-		GenericInfo:       genericinfoConfig,
-		DriverInfo:        driverInfoConfig,
-		ModuleInfo:        moduleInfoConfig,
-		Statistics:        statisticsConfig,
-		EthtoolPath:       ethtoolPath,
-		EthtoolTimeout:    ethtoolTimeout,
-		KeepAbsentMetrics: keepAbsentMetrics,
-		ListLabelFormat:   "single-label",
+		GenericInfo:                  genericinfoConfig,
+		DriverInfo:                   driverInfoConfig,
+		ModuleInfo:                   moduleInfoConfig,
+		Statistics:                   statisticsConfig,
+		EthtoolPath:                  ethtoolPath,
+		EthtoolTimeout:               ethtoolTimeout,
+		KeepAbsentMetricsModuleInfo:  false,
+		KeepAbsentMetricsGenericInfo: false,
+		KeepAbsentMetricsDriverInfo:  false,
+		KeepAbsentMetricsStatistics:  false,
+		ListLabelFormat:              "single-label",
 	}
 
 	registry := CollectInterfaceMetrics("eth4", collectorConfig)

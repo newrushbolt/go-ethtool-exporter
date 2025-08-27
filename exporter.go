@@ -121,14 +121,17 @@ func collectMetrics() registry.RegistryCollection {
 		PerQueueGenerateMissingBytesMetrics: *statisticsGenerateMissingPerQueueMetrics,
 	}
 	collectorConfig := collector.CollectorConfig{
-		GenericInfo:       genericinfoConfig,
-		DriverInfo:        driverInfoConfig,
-		ModuleInfo:        moduleInfoConfig,
-		Statistics:        statisticsConfig,
-		EthtoolPath:       *ethtoolPath,
-		EthtoolTimeout:    *ethtoolTimeout,
-		KeepAbsentMetrics: *keepAbsentMetrics,
-		ListLabelFormat:   *listLabelFormat,
+		GenericInfo:                  genericinfoConfig,
+		DriverInfo:                   driverInfoConfig,
+		ModuleInfo:                   moduleInfoConfig,
+		Statistics:                   statisticsConfig,
+		EthtoolPath:                  *ethtoolPath,
+		EthtoolTimeout:               *ethtoolTimeout,
+		KeepAbsentMetricsModuleInfo:  *keepAbsentMetricsModuleInfo,
+		KeepAbsentMetricsGenericInfo: *keepAbsentMetricsGenericInfo,
+		KeepAbsentMetricsDriverInfo:  *keepAbsentMetricsDriverInfo,
+		KeepAbsentMetricsStatistics:  *keepAbsentMetricsStatistics,
+		ListLabelFormat:              *listLabelFormat,
 	}
 
 	for _, interfaceName := range interfaces {
