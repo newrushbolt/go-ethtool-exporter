@@ -41,6 +41,7 @@ var (
 	collectDriverInfoCommon              = kingpin.Flag("collect-driver-info-common", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
+	collectStatisticsPerQueueGeneral     = kingpin.Flag("collect-statistics-per-queue-general", "").Default("true").Bool()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, disabled by default
@@ -49,6 +50,7 @@ var (
 	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
 	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
 	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
+	collectStatisticsPerQueuePerType   = kingpin.Flag("collect-statistics-per-queue-per-type", "").Default("false").Bool()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Port detection settings
@@ -69,6 +71,9 @@ var (
 	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
 	// Maybe they should be per-module?
 	keepAbsentMetrics = kingpin.Flag("keep-absent-metrics", "Set 'Nan' value for every metric that was not found").Default("false").Bool()
-	listLabelFormat   = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
+	// Check the metrics library for more info
+	// https://github.com/newrushbolt/go-ethtool-metrics/blob/9c84000a5e0736e721630447958639d09cc532d1/pkg/metrics/statistics/statistics_structs.go#L6
+	statisticsGenerateMissingPerQueueMetrics = kingpin.Flag("statistics-generate-missing-per-queue-metrics", "Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)").Default("true").Bool()
+	listLabelFormat                          = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
 	// FLAG GROUP END
 )
