@@ -2,6 +2,43 @@
 
 Prometheus ethtool exporter on top of [go-ethtool-metrics](https://github.com/newrushbolt/go-ethtool-metrics) library
 
+## Why another exporter
+
+https://github.com/newrushbolt/go-ethtool-metrics?tab=readme-ov-file#motivation-for-library-instead-of-exporter
+
+## Typical use cases
+
+Have a look at [USECASES.md](USECASES.md)
+
+## Comparing to other exporters
+
+<!-- Aligning these tables in GFM is a nightmare. <nobr> does not work, non-breaking hyphen too. nbsp works, but makes source MD very hard to read.
+I was one step away from doing the whole thing in pure HTML 😭 -->
+
+### Metrics
+
+|                                                      Exporter                                                           | Structured and vendor abstract | [Generic info](## "ethtool eth0") | [Module info](## "ethtool -m eth0") | [Driver info](## "ethtool -i eth0") |  [Statistics](## "ethtool -S eth0")   |
+|-------------------------------------------------------------------------------------------------------------------------|--------------------------------|-----------------------------------|-------------------------------------|-------------------------------------|---------------------------------------|
+| [prometheus/node_exporter](https://github.com/prometheus/node_exporter/blob/master/collector/ethtool_linux.go)          |               ✅               |             ✅                     |       ❌                            |     ✅                              | 🧩 General (bytes, packets and errors) |
+| [influxdata/telegraf](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/ethtool)                        |               ❌               |             ✅                     |       ❌                            |     ❌                              | ✅                                     |
+| [newrushbolt/go-ethtool-exporter](https://github.com/newrushbolt/go-ethtool-exporter)                                   |               ✅               |             ✅                     |       ✅                            |     ✅                              | ✅ General, per-queue general and XDP  |
+| [newrushbolt/prometheus-ethtool-exporter](https://github.com/newrushbolt/prometheus-ethtool-exporter)                   |               ❌               |             ✅                     |       ✅                            |     ✅                              | ✅                                     |
+| [adeverteuil/ethtool_exporter](https://github.com/adeverteuil/ethtool_exporter)                                         |               ❌               |             ✅                     |       ❌                            |     ❌                              | 🧩 Except per-queue for bnxt_en        |
+| [Showmax/prometheus-ethtool-exporter](https://github.com/Showmax/prometheus-ethtool-exporter)                           |               ❌               |             ✅                     |       ✅                            |     ❌                              | 🧩 Except per-queue for bnxt_en        |
+| [slyngshede/prometheus-ethtool-exporter](https://gitlab-replica-b.wikimedia.org/slyngshede/prometheus-ethtool-exporter) |               ❌               |             ✅                     |       ✅                            |     ❌                              | 🧩 Except per-queue for bnxt_en        |
+
+### Other features
+
+|                                                    Exporter                                                             | Deploy dependencies   |         Port discovery        |         Test data          | Provides alerts | Provides dashboards |   Provides deploy methods   |
+|-------------------------------------------------------------------------------------------------------------------------|-----------------------|-------------------------------|----------------------------|-----------------|---------------------|-----------------------------|
+| [prometheus/node_exporter](https://github.com/prometheus/node_exporter/blob/master/collector/ethtool_linux.go)          |   ✅Single binary     | ❌Only regexps                | 🧩Only synthetic            |     🧩3rd party  |         ❌          | ✅                          |
+| [influxdata/telegraf](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/ethtool)                        |   ✅Single binary     | ❌Only regexps                | 🧩Partly                    |     🧩3rd party  |         ❌          | ✅                          |
+| [newrushbolt/go-ethtool-exporter](https://github.com/newrushbolt/go-ethtool-exporter)                                   |   ✅Single binary     | ✅By types, bridges and bonds | ✅                          |     💪Planned    |         💪Planned   | 💪Planned                   |
+| [newrushbolt/prometheus-ethtool-exporter](https://github.com/newrushbolt/prometheus-ethtool-exporter)                   |   ❌Python + modules  | ❌Only regexps                | ✅                          |     ❌           |         ❌          | ❌                          |
+| [adeverteuil/ethtool_exporter](https://github.com/adeverteuil/ethtool_exporter)                                         |   ❌Python + modules  | ❌Only regexps                | ❌Not really, only one case |     ❌           |         ❌          | ❌                          |
+| [Showmax/prometheus-ethtool-exporter](https://github.com/Showmax/prometheus-ethtool-exporter)                           |   ❌Python + modules  | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset                 |
+| [slyngshede/prometheus-ethtool-exporter](https://gitlab-replica-b.wikimedia.org/slyngshede/prometheus-ethtool-exporter) |   ❌Python + modules  | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset, Debian package |
+
 ## Usage
 
 ### Port discovery
