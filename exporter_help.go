@@ -42,6 +42,7 @@ Collectors, enabled by default:
   --no-collect-module-info-diagnostics-alarms
   --no-collect-module-info-diagnostics-warnings
   --no-collect-statistics-per-queue-general
+  --no-collect-statistics-per-queue-xdp
 
 Collectors, disabled by default:
   --collect-all-metrics

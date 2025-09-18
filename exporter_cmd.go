@@ -42,6 +42,7 @@ var (
 	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
 	collectStatisticsPerQueueGeneral     = kingpin.Flag("collect-statistics-per-queue-general", "").Default("true").Bool()
+	collectStatisticsPerQueueXdp         = kingpin.Flag("collect-statistics-per-queue-xdp", "").Default("true").Bool()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, disabled by default
