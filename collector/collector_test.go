@@ -101,6 +101,7 @@ func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 		PerQueueGeneral:                     false,
 		PerQueuePerType:                     false,
 		PerQueueGenerateMissingBytesMetrics: false,
+		PerQueueXdp:                         false,
 	}
 	ethtoolPath := "../testdata/ethtool.sh"
 	ethtoolTimeout := 1 * time.Second
