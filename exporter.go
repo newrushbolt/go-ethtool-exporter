@@ -119,6 +119,7 @@ func collectMetrics() registry.RegistryCollection {
 		PerQueueGeneral:                     *collectStatisticsPerQueueGeneral,
 		PerQueuePerType:                     *collectStatisticsPerQueuePerType,
 		PerQueueGenerateMissingBytesMetrics: *statisticsGenerateMissingPerQueueMetrics,
+		PerQueueXdp:                         *collectStatisticsPerQueueXdp,
 	}
 	collectorConfig := collector.CollectorConfig{
 		GenericInfo:                  genericinfoConfig,
@@ -166,6 +167,22 @@ func init() {
 	initLogger()
 }
 
+func enableAllMetricCollectionFlags() {
+	// TODO: find better solution because manually adding flags to this block is not fun
+	*collectDriverInfoCommon = true
+	*collectDriverInfoFeatures = true
+	*collectGenericInfoModes = true
+	*collectGenericInfoSettings = true
+	*collectModuleInfoDiagnosticsAlarms = true
+	*collectModuleInfoDiagnosticsValues = true
+	*collectModuleInfoDiagnosticsWarnings = true
+	*collectModuleInfoVendor = true
+	*collectStatisticsGeneral = true
+	*collectStatisticsPerQueueGeneral = true
+	*collectStatisticsPerQueuePerType = true
+	*collectStatisticsPerQueueXdp = true
+}
+
 func main() {
 	// Covering main() is really hard. Moving logic toward separate function(s) is a better solution
 	slog.Info("Starting go-ethtool-exporter")
@@ -182,18 +199,7 @@ func main() {
 
 	if *collectAllMetrics {
 		slog.Warn("Flag --collect-all-metrics is set, ignoring all other --collect-* flags")
-		// TODO: find better solution because manually adding flags to this block is not fun
-		*collectDriverInfoCommon = true
-		*collectDriverInfoFeatures = true
-		*collectGenericInfoModes = true
-		*collectGenericInfoSettings = true
-		*collectModuleInfoDiagnosticsAlarms = true
-		*collectModuleInfoDiagnosticsValues = true
-		*collectModuleInfoDiagnosticsWarnings = true
-		*collectModuleInfoVendor = true
-		*collectStatisticsGeneral = true
-		*collectStatisticsPerQueueGeneral = true
-		*collectStatisticsPerQueuePerType = true
+		enableAllMetricCollectionFlags()
 	}
 
 	switch exporterCommand {
