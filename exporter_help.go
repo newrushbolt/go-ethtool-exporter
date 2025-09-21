@@ -41,8 +41,7 @@ Collectors, enabled by default:
   --no-collect-driver-info-common
   --no-collect-module-info-diagnostics-alarms
   --no-collect-module-info-diagnostics-warnings
-  --no-collect-statistics-per-queue-general
-  --no-collect-statistics-per-queue-xdp
+  --collect-statistics-general
 
 Collectors, disabled by default:
   --collect-all-metrics
@@ -51,8 +50,9 @@ Collectors, disabled by default:
   --collect-generic-info-modes
   --collect-module-info-diagnostics-values
   --collect-module-info-vendor
-  --collect-statistics-general
+  --collect-statistics-per-queue-general
   --collect-statistics-per-queue-per-type
+  --collect-statistics-per-queue-xdp
 
 Port detection settings:
   --discover-allowed-port-types=1,
