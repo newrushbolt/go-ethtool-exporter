@@ -22,7 +22,7 @@ var (
 	// Without caching it seems like 2 requests is enough. And +1 for /health method
 	httpMaxRequests = httpServerCommand.Flag("web.max-requests", "Maximum number of concurrent HTTP requests").Default("3").Int()
 	// TODO: implement http server params, such as
-	// - inmemory metric cache and it's max ttl
+	// - in-memory metric cache and it's max ttl
 	// - TLS-related stuff
 
 	// TODO: add env support???
@@ -41,8 +41,7 @@ var (
 	collectDriverInfoCommon              = kingpin.Flag("collect-driver-info-common", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsAlarms   = kingpin.Flag("collect-module-info-diagnostics-alarms", "").Default("true").Bool()
 	collectModuleInfoDiagnosticsWarnings = kingpin.Flag("collect-module-info-diagnostics-warnings", "").Default("true").Bool()
-	collectStatisticsPerQueueGeneral     = kingpin.Flag("collect-statistics-per-queue-general", "").Default("true").Bool()
-	collectStatisticsPerQueueXdp         = kingpin.Flag("collect-statistics-per-queue-xdp", "").Default("true").Bool()
+	collectStatisticsGeneral             = kingpin.Flag("collect-statistics-general", "").Default("false").Bool()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, disabled by default
@@ -51,8 +50,9 @@ var (
 	collectGenericInfoModes            = kingpin.Flag("collect-generic-info-modes", "").Default("false").Bool()
 	collectModuleInfoDiagnosticsValues = kingpin.Flag("collect-module-info-diagnostics-values", "").Default("false").Bool()
 	collectModuleInfoVendor            = kingpin.Flag("collect-module-info-vendor", "").Default("false").Bool()
-	collectStatisticsGeneral           = kingpin.Flag("collect-statistics-general", "").Default("false").Bool()
+	collectStatisticsPerQueueGeneral   = kingpin.Flag("collect-statistics-per-queue-general", "").Default("false").Bool()
 	collectStatisticsPerQueuePerType   = kingpin.Flag("collect-statistics-per-queue-per-type", "").Default("false").Bool()
+	collectStatisticsPerQueueXdp       = kingpin.Flag("collect-statistics-per-queue-xdp", "").Default("false").Bool()
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Port detection settings
