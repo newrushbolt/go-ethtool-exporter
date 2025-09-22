@@ -70,7 +70,7 @@ var (
 
 	// FLAG GROUP START: Keep absent metrics, setting 'Nan' value for every metric that was not found
 	// Absent metrics (*float64 nil) behavior
-	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.3?tab=readme-ov-file#missing-metrics
+	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.10?tab=readme-ov-file#missing-metrics
 	keepAbsentMetricsModuleInfo  = kingpin.Flag("keep-absent-metrics-module-info", "").Default("true").Bool()
 	keepAbsentMetricsGenericInfo = kingpin.Flag("keep-absent-metrics-generic-info", "").Default("false").Bool()
 	keepAbsentMetricsDriverInfo  = kingpin.Flag("keep-absent-metrics-driver-info", "").Default("false").Bool()

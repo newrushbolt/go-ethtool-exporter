@@ -1,0 +1,63 @@
+---
+groups:
+- name: Ethtool SFP
+  rules:
+  - alert: NetworkTransceiverWarning
+    expr: >-
+        {__name__=~"module_info_diagnostics_warnings_.*"} > 0
+    for: 15m
+    labels:
+      severity: warn
+    annotations:
+      summary: >-
+        Transceiver in network interface {{ $labels.device }} has diagnostic warning: {{ $labels.__name__ }}
+      actions: &ethtool_sfp_action >-
+        Check the `ethtool -m` on server and `show interfaces transceiver` on switch for more info. You may need to replace the "transceiver+optics+transceiver" bundle.
+  - alert: NetworkTransceiverAlarm
+    expr: >-
+        {__name__=~"module_info_diagnostics_alarms_.*"} > 0
+    for: 5m
+    labels:
+      severity: high
+    annotations:
+      summary: >-
+        Transceiver in network interface {{ $labels.device }} has diagnostic alarm: {{ $labels.__name__ }}
+      actions: *ethtool_sfp_action
+  # This one is tricky. Prometheus has no way of checking for Nan, so we can only compare metric to itself :shrug:
+  # Also notice, that some alternative prometheus-compatible engines may not not handle Nan the way Prometheus does.
+  # VictoriaMetrics, handles Nan in a different way, and you cannot build any expression using it :melt:
+  #
+  # https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#nan
+  # https://medium.com/@romanhavronenko/victoriametrics-promql-compliance-d4318203f51e#nans
+  # I still think that Nan is proper way to indicate missing metrics, way better than generating ton of "unless absent()" rules for each metric_name,
+  # but I should probably also add some sort of per-device Nan-events counter, so VictoriaMetrics users could alarm on missing metrics
+  - alert: NetworkTransceiverMissingData
+    expr: >-
+      (
+        {__name__=~"module_info_diagnostics_(alarms|warnings)_.*"}
+        != on(__name__, instance, device)
+        {__name__=~"module_info_diagnostics_(alarms|warnings)_.*"}
+      )
+      AND on(instance, device)
+      (
+        driver_info_features_test{} == 1
+        AND on(instance, device)
+        generic_info_settings_info{Port="FIBRE"}
+      )
+    # If we disable generation of NaNs (or use VM instead of stock prometheus), the alternative would be
+    # something like the following expression FOR EVERY WARNINGS\ALARM METRIC :harold:
+    # expr: >-
+    #   (
+    #     driver_info_features_test{} == 1
+    #     AND on(instance, device)
+    #     generic_info_settings_info{Port="FIBRE"}
+    #   )
+    #   UNLESS on(instance, device)
+    #   module_info_diagnostics_warnings_input_power_low > -1
+    for: 15m
+    labels:
+      severity: high
+    annotations:
+      summary: >-
+        Transceiver in network interface {{ $labels.device }} is missing diagnostic data
+      action: Make sure driver and firmware are compatible, and the transceiver is present

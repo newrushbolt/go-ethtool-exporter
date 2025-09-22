@@ -20,13 +20,10 @@ Default alerts may look like that
 
 ### Transceiver warnings and alerts
 
-Bla-bla, why we need it
+This is the most frequently used metrics from ethtool, giving you the state of warnings\alarms. Easy to collect, easy to store, easy to alert.  
+With this exporter, also easy to notice when missing.
 
-Default alerts may look like that
-
-```yaml
-
-```
+[Alert examples](alerts/sfp_warnings_alarms.rules.yaml)
 
 ### Driver info
 

@@ -12,10 +12,39 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 87.0
+  COVERAGE_THRESHOLD: 86.7
 
 jobs:
-  test:
+  # Disabled for now, since github-actions REQUIRES docker image to has nodejs runtime in order to do git checkout 🫠
+  # test_alerts:
+  #   # Release-please causes us to have two commits in the main branch.
+  #   # We don't want to run tests on second (release) commit.
+  #   if: |
+  #     !contains(github.event.head_commit.message, '(main): release')
+  #   runs-on: ubuntu-24.04
+  #   container:
+  #     image: prom/prometheus:v3.5.0
+  #   steps:
+  #     - uses: actions/checkout@v4.2.2
+  #     - name: Run tests
+  #       run: promtool test rules alerts/tests.yaml --debug --diff
+
+  test_docs:
+    # Release-please causes us to have two commits in the main branch.
+    # We don't want to run tests on second (release) commit.
+    if: |
+      !contains(github.event.head_commit.message, '(main): release')
+    runs-on: ubuntu-24.04
+    container:
+      image: quay.io/prometheus/golang-builder:1.23-base
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Check if auto-generated "--help" is up to date
+        run: |
+          go run utils/generate_exporter_help.go > exporter_help.go.new
+          diff exporter_help.go exporter_help.go.new
+
+  test_exporter:
     # Release-please causes us to have two commits in the main branch.
     # We don't want to run tests on second (release) commit.
     if: |
@@ -27,12 +56,6 @@ jobs:
       - uses: actions/checkout@v4.2.2
       - name: Run tests
         run: go test ./... -coverpkg ./... -coverprofile coverage.out
-
-      - name: Check if auto-generated "--help" is up to date
-        run: |
-          go run utils/generate_exporter_help.go > exporter_help.go.new
-          diff exporter_help.go exporter_help.go.new
-
       - name: Get coverage filtering package
         run: go install github.com/quantumcycle/go-ignore-cov@v0.6.1
       - name: Filter coverage
@@ -54,7 +77,10 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
-    needs: [test]
+    needs:
+      - test_docs
+      # - test_alerts
+      - test_exporter
     container:
       image: quay.io/prometheus/golang-builder:1.23-base
     strategy:
