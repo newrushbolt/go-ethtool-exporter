@@ -13,6 +13,7 @@ import (
 
 	"github.com/newrushbolt/go-ethtool-exporter/collector"
 	"github.com/newrushbolt/go-ethtool-exporter/interfaces"
+	"github.com/newrushbolt/go-ethtool-exporter/metrics"
 	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
@@ -99,14 +100,14 @@ func collectMetrics() registry.RegistryCollection {
 	interfaces := interfaces.GetInterfacesList(*linuxNetClassPath, discoverConfig, allowedTypes)
 
 	// Format configs
+	driverInfoConfig := driver_info.CollectConfig{
+		CollectCommon:   *collectDriverInfoCommon,
+		CollectFeatures: *collectDriverInfoFeatures,
+	}
 	genericinfoConfig := generic_info.CollectConfig{
 		CollectAdvertisedSettings: *collectGenericInfoModes,
 		CollectSupportedSettings:  *collectGenericInfoModes,
 		CollectSettings:           *collectGenericInfoSettings,
-	}
-	driverInfoConfig := driver_info.CollectConfig{
-		CollectCommon:   *collectDriverInfoCommon,
-		CollectFeatures: *collectDriverInfoFeatures,
 	}
 	moduleInfoConfig := module_info.CollectConfig{
 		CollectDiagnosticsAlarms:   *collectModuleInfoDiagnosticsAlarms,
@@ -122,17 +123,35 @@ func collectMetrics() registry.RegistryCollection {
 		PerQueueXdp:                         *collectStatisticsPerQueueXdp,
 	}
 	collectorConfig := collector.CollectorConfig{
-		GenericInfo:                  genericinfoConfig,
-		DriverInfo:                   driverInfoConfig,
-		ModuleInfo:                   moduleInfoConfig,
-		Statistics:                   statisticsConfig,
-		EthtoolPath:                  *ethtoolPath,
-		EthtoolTimeout:               *ethtoolTimeout,
-		KeepAbsentMetricsModuleInfo:  *keepAbsentMetricsModuleInfo,
-		KeepAbsentMetricsGenericInfo: *keepAbsentMetricsGenericInfo,
-		KeepAbsentMetricsDriverInfo:  *keepAbsentMetricsDriverInfo,
-		KeepAbsentMetricsStatistics:  *keepAbsentMetricsStatistics,
-		ListLabelFormat:              *listLabelFormat,
+		DriverInfo:  driverInfoConfig,
+		GenericInfo: genericinfoConfig,
+		ModuleInfo:  moduleInfoConfig,
+		Statistics:  statisticsConfig,
+
+		EthtoolPath:     *ethtoolPath,
+		EthtoolTimeout:  *ethtoolTimeout,
+		ListLabelFormat: *listLabelFormat,
+
+		DriverInfoAbsentMetrics: metrics.AbsentMetricsConfig{
+			ExposeNan:          *absentMetricsDriverInfoExposeNan,
+			ExposeTotalCounter: *absentMetricsDriverInfoExposeTotalCounter,
+			ExposeDetailedInfo: *absentMetricsDriverInfoExposeDetailedInfo,
+		},
+		GenericInfoAbsentMetrics: metrics.AbsentMetricsConfig{
+			ExposeNan:          *absentMetricsGenericInfoExposeNan,
+			ExposeTotalCounter: *absentMetricsGenericInfoExposeTotalCounter,
+			ExposeDetailedInfo: *absentMetricsGenericInfoExposeDetailedInfo,
+		},
+		ModuleInfoAbsentMetrics: metrics.AbsentMetricsConfig{
+			ExposeNan:          *absentMetricsModuleInfoExposeNan,
+			ExposeTotalCounter: *absentMetricsModuleInfoExposeTotalCounter,
+			ExposeDetailedInfo: *absentMetricsModuleInfoExposeDetailedInfo,
+		},
+		StatisticsAbsentMetrics: metrics.AbsentMetricsConfig{
+			ExposeNan:          *absentMetricsStatisticsExposeNan,
+			ExposeTotalCounter: *absentMetricsStatisticsExposeTotalCounter,
+			ExposeDetailedInfo: *absentMetricsStatisticsExposeDetailedInfo,
+		},
 	}
 
 	for _, interfaceName := range interfaces {

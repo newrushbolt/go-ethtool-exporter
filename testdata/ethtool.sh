@@ -13,6 +13,10 @@ case "$1" in
     cat "$SCRIPT_DIR/eth4.generic_info.src"
     exit 0
     ;;
+  eth5)
+    cat "$SCRIPT_DIR/eth5.generic_info.src"
+    exit 0
+    ;;
   -i)
     echo "driver info for $2"
     exit 0

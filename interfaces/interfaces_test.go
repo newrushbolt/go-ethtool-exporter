@@ -29,7 +29,7 @@ func TestInterfacesAllTypes(t *testing.T) {
 	}
 	interfaces := GetInterfacesList(defaultNetClassPath, discoverConfig, allowedTypes)
 
-	assert.Equal(t, []string{"bond0", "br0", "eth0", "eth1", "eth2", "eth3", "eth4", "slave0"}, interfaces)
+	assert.Equal(t, []string{"bond0", "br0", "eth0", "eth1", "eth2", "eth3", "eth4", "eth5", "slave0"}, interfaces)
 }
 
 func TestInterfacesAllEthernet(t *testing.T) {

@@ -110,31 +110,40 @@ func TestExporterDirectoryMustExist(t *testing.T) {
 func ptr[T any](v T) *T { return &v }
 
 func setupHttpHandlerFlags(t *testing.T) {
-	// Override global params for test
+	// Set test-specific overrides
 	portsRegexp := regexp.MustCompile("eth4")
 	discoverPortsRegexp = &portsRegexp
 	ethtoolPath = ptr("testdata/ethtool.sh")
 	linuxNetClassPath = ptr("testdata/interfaces/sys/class/net")
+	// Set default global params
+	absentMetricsDriverInfoExposeDetailedInfo = ptr(false)
+	absentMetricsDriverInfoExposeNan = ptr(false)
+	absentMetricsDriverInfoExposeTotalCounter = ptr(false)
+	absentMetricsGenericInfoExposeDetailedInfo = ptr(false)
+	absentMetricsGenericInfoExposeNan = ptr(false)
+	absentMetricsGenericInfoExposeTotalCounter = ptr(false)
+	absentMetricsModuleInfoExposeDetailedInfo = ptr(false)
+	absentMetricsModuleInfoExposeNan = ptr(false)
+	absentMetricsModuleInfoExposeTotalCounter = ptr(false)
+	absentMetricsStatisticsExposeDetailedInfo = ptr(false)
+	absentMetricsStatisticsExposeNan = ptr(false)
+	absentMetricsStatisticsExposeTotalCounter = ptr(false)
+	collectDriverInfoCommon = ptr(false)
+	collectDriverInfoFeatures = ptr(false)
+	collectGenericInfoModes = ptr(true)
+	collectGenericInfoSettings = ptr(true)
+	collectModuleInfoDiagnosticsAlarms = ptr(false)
+	collectModuleInfoDiagnosticsValues = ptr(false)
+	collectModuleInfoDiagnosticsWarnings = ptr(false)
+	collectModuleInfoVendor = ptr(false)
 	discoverAllowedPortTypes = ptr("1,")
 	discoverAllPorts = ptr(true)
 	discoverBondSlaves = ptr(false)
 	discoverBridgeSlaves = ptr(false)
-	collectGenericInfoModes = ptr(true)
-	collectGenericInfoSettings = ptr(true)
-	collectDriverInfoCommon = ptr(false)
-	collectDriverInfoFeatures = ptr(false)
-	collectModuleInfoDiagnosticsAlarms = ptr(false)
-	collectModuleInfoDiagnosticsWarnings = ptr(false)
-	collectModuleInfoDiagnosticsValues = ptr(false)
-	collectModuleInfoVendor = ptr(false)
-	keepAbsentMetricsDriverInfo = ptr(false)
-	keepAbsentMetricsGenericInfo = ptr(false)
-	keepAbsentMetricsModuleInfo = ptr(false)
-	keepAbsentMetricsStatistics = ptr(false)
-	listLabelFormat = ptr("single-label")
-	textfileDirectory = ptr(t.TempDir())
 	ethtoolTimeout = ptr(time.Second * 5)
+	listLabelFormat = ptr("single-label")
 	loopTextfileUpdateInterval = ptr(time.Second)
+	textfileDirectory = ptr(t.TempDir())
 }
 
 func TestExporterHttpMetricsHandler(t *testing.T) {
@@ -143,7 +152,6 @@ func TestExporterHttpMetricsHandler(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/metrics", nil)
 	metricsHandler(recorder, req)
-
 	resp := recorder.Result()
 	defer resp.Body.Close()
 
@@ -156,6 +164,38 @@ func TestExporterHttpMetricsHandler(t *testing.T) {
 	}
 
 	expectedBytes, err := os.ReadFile("testdata/eth4.generic_info.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetricResult := string(expectedBytes)
+	assert.Equal(t, expectedMetricResult, string(body))
+}
+
+func TestExporterHttpMetricsHandlerWithMissingMetrics(t *testing.T) {
+	setupHttpHandlerFlags(t)
+	// Override extra test variables
+	portsRegexp := regexp.MustCompile("eth5")
+	discoverPortsRegexp = &portsRegexp
+	discoverAllowedPortTypes = ptr("666,")
+	absentMetricsGenericInfoExposeDetailedInfo = ptr(true)
+	absentMetricsGenericInfoExposeNan = ptr(true)
+	absentMetricsGenericInfoExposeTotalCounter = ptr(true)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	metricsHandler(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+
+	expectedBytes, err := os.ReadFile("testdata/eth5.generic_info.prom")
 	if err != nil {
 		t.Fatalf("Failed to read expected metrics: %v", err)
 	}
