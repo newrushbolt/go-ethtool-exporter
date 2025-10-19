@@ -1,0 +1,9 @@
+generic_info_supported_settings_info{FecModes="",LinkModes="10000baseSR/Full",PauseFrameUse="Symmetric",device="eth5"} 1
+generic_info_advertised_settings_info{FecModes="",LinkModes="10000baseSR/Full",PauseFrameUse="No",device="eth5"} 1
+generic_info_settings_info{Duplex="Full",Port="FIBRE",Speed="",Transceiver="internal",device="eth5"} 1
+generic_info_settings_speed_bytes{device="eth5"} NaN
+missing_metric_info{collector="generic_info",device="eth5",metric_name="generic_info_settings_speed_bytes"} 1
+generic_info_settings_speed_bits{device="eth5"} NaN
+missing_metric_info{collector="generic_info",device="eth5",metric_name="generic_info_settings_speed_bits"} 1
+generic_info_settings_auto_negotiation{device="eth5"} 0
+generic_info_settings_link_detected{device="eth5"} 1

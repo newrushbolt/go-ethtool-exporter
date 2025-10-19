@@ -66,11 +66,19 @@ Port detection settings:
   --discover-ports-regexp=.+
     Only discover ports with names matching this regexp
 
-Keep absent metrics, setting 'Nan' value for every metric that was not found:
-  --no-keep-absent-metrics-module-info
-  --keep-absent-metrics-generic-info
-  --keep-absent-metrics-driver-info
-  --keep-absent-metrics-statistics
+Absent metrics exposure. This controls how to expose missing metrics: via Nan values of the same metrics, via counter metrics, counting how many metrics are missing per collector, or via special per-metric metrics, exposing full missing label name via label:
+  --absent-metrics-driver-info-expose-nan
+  --absent-metrics-driver-info-expose-total-counter
+  --absent-metrics-driver-info-expose-detailed-info
+  --absent-metrics-generic-info-expose-nan
+  --absent-metrics-generic-info-expose-total-counter
+  --absent-metrics-generic-info-expose-detailed-info
+  --no-absent-metrics-module-info-expose-nan
+  --absent-metrics-module-info-expose-total-counter
+  --absent-metrics-module-info-expose-detailed-info
+  --absent-metrics-statistics-expose-nan
+  --absent-metrics-statistics-expose-total-counter
+  --absent-metrics-statistics-expose-detailed-info
 
 Metrics processing settings:
   --no-statistics-generate-missing-per-queue-metrics

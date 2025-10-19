@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/newrushbolt/go-ethtool-exporter/metrics"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/module_info"
@@ -56,16 +57,19 @@ func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 	ethtoolTimeout := 1 * time.Second
 
 	collectorConfig := CollectorConfig{
-		GenericInfo:                  *genericinfoConfig,
-		DriverInfo:                   *driverInfoConfig,
-		ModuleInfo:                   *moduleInfoConfig,
-		Statistics:                   *statisticsConfig,
-		EthtoolPath:                  ethtoolPath,
-		EthtoolTimeout:               ethtoolTimeout,
-		KeepAbsentMetricsModuleInfo:  false,
-		KeepAbsentMetricsGenericInfo: false,
-		KeepAbsentMetricsDriverInfo:  false,
-		KeepAbsentMetricsStatistics:  false,
+		GenericInfo: *genericinfoConfig,
+		DriverInfo:  *driverInfoConfig,
+		ModuleInfo:  *moduleInfoConfig,
+		Statistics:  *statisticsConfig,
+
+		EthtoolPath:     ethtoolPath,
+		EthtoolTimeout:  ethtoolTimeout,
+		ListLabelFormat: "single-label",
+
+		GenericInfoAbsentMetrics: metrics.AbsentMetricsConfig{},
+		ModuleInfoAbsentMetrics:  metrics.AbsentMetricsConfig{},
+		DriverInfoAbsentMetrics:  metrics.AbsentMetricsConfig{},
+		StatisticsAbsentMetrics:  metrics.AbsentMetricsConfig{},
 	}
 
 	registry := CollectInterfaceMetrics("eth0", collectorConfig)
@@ -107,17 +111,19 @@ func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 	ethtoolTimeout := 1 * time.Second
 
 	collectorConfig := CollectorConfig{
-		GenericInfo:                  genericinfoConfig,
-		DriverInfo:                   driverInfoConfig,
-		ModuleInfo:                   moduleInfoConfig,
-		Statistics:                   statisticsConfig,
-		EthtoolPath:                  ethtoolPath,
-		EthtoolTimeout:               ethtoolTimeout,
-		KeepAbsentMetricsModuleInfo:  false,
-		KeepAbsentMetricsGenericInfo: false,
-		KeepAbsentMetricsDriverInfo:  false,
-		KeepAbsentMetricsStatistics:  false,
-		ListLabelFormat:              "single-label",
+		GenericInfo: genericinfoConfig,
+		DriverInfo:  driverInfoConfig,
+		ModuleInfo:  moduleInfoConfig,
+		Statistics:  statisticsConfig,
+
+		EthtoolPath:     ethtoolPath,
+		EthtoolTimeout:  ethtoolTimeout,
+		ListLabelFormat: "single-label",
+
+		GenericInfoAbsentMetrics: metrics.AbsentMetricsConfig{},
+		ModuleInfoAbsentMetrics:  metrics.AbsentMetricsConfig{},
+		DriverInfoAbsentMetrics:  metrics.AbsentMetricsConfig{},
+		StatisticsAbsentMetrics:  metrics.AbsentMetricsConfig{},
 	}
 
 	registry := CollectInterfaceMetrics("eth4", collectorConfig)

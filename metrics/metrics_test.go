@@ -32,7 +32,7 @@ func TestDropAllNils(t *testing.T) {
 	metricRegistry := registry.Registry{}
 	prefixes := []string{"prefix"}
 	labels := map[string]string{}
-	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, false, "single-label")
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "single-label")
 
 	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
@@ -60,7 +60,34 @@ prefix_nil_float64{} NaN`
 	metricRegistry := registry.Registry{}
 	prefixes := []string{"prefix"}
 	labels := map[string]string{}
-	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, true, "single-label")
+	absentMetrics := AbsentMetricsConfig{
+		ExposeNan:          true,
+		ExposeTotalCounter: false,
+		ExposeDetailedInfo: false,
+	}
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, absentMetrics, "single-label")
+
+	metricRegistryResult := metricRegistry.FormatTextfileString()
+	assert.Equal(t, expectedMetricResult, metricRegistryResult)
+}
+
+func TestMissingMetricsExposeDetailedInfo(t *testing.T) {
+	expectedMetricResult := `missing_metric_info{metric_name="prefix_nil_float64"} 1`
+	type TestStruct struct {
+		NilFloat64 *float64
+	}
+
+	nilObject := &TestStruct{}
+
+	metricRegistry := registry.Registry{}
+	prefixes := []string{"prefix"}
+	labels := map[string]string{}
+	absentMetrics := AbsentMetricsConfig{
+		ExposeNan:          false,
+		ExposeTotalCounter: false,
+		ExposeDetailedInfo: true,
+	}
+	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, absentMetrics, "single-label")
 
 	metricRegistryResult := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
@@ -126,7 +153,7 @@ prefprefix_per_qstats_general_tx_bytes{queue="0"} 123`
 	labels := map[string]string{
 		"device": "test_device",
 	}
-	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, false, "single-label")
+	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "single-label")
 
 	metricResultString := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedMetricResult, metricResultString)
@@ -142,7 +169,7 @@ func TestMetricListFromStructsMetricIndexError(t *testing.T) {
 	}
 	input := dummyStruct{Info: "test"}
 
-	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, false, "single-label")
+	MetricListFromStructs(input, &metricList, []string{"dummy"}, nil, AbsentMetricsConfig{}, "single-label")
 }
 
 func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
@@ -168,12 +195,12 @@ func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
 	prefixes := []string{}
 	labels := map[string]string{}
 
-	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, true, "multi-label")
+	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "multi-label")
 	metricResultString := metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedResultMultilabel, metricResultString)
 
 	metricRegistry = registry.Registry{}
-	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, true, "both")
+	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "both")
 	metricResultString = metricRegistry.FormatTextfileString()
 	assert.Equal(t, expectedResultBoth, metricResultString)
 }

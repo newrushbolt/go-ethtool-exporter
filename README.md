@@ -29,15 +29,15 @@ I was one step away from doing the whole thing in pure HTML 😭 -->
 
 ### Other features
 
-|                                                    Exporter                                                             | Deploy dependencies   |         Port discovery        |         Test data          | Provides alerts | Provides dashboards |   Provides deploy methods   |
-|-------------------------------------------------------------------------------------------------------------------------|-----------------------|-------------------------------|----------------------------|-----------------|---------------------|-----------------------------|
-| [prometheus/node_exporter](https://github.com/prometheus/node_exporter/blob/master/collector/ethtool_linux.go)          |   ✅Single binary     | ❌Only regexps                | 🧩Only synthetic            |     🧩3rd party  |         ❌          | ✅                          |
-| [influxdata/telegraf](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/ethtool)                        |   ✅Single binary     | ❌Only regexps                | 🧩Partly                    |     🧩3rd party  |         ❌          | ✅                          |
-| [newrushbolt/go-ethtool-exporter](https://github.com/newrushbolt/go-ethtool-exporter)                                   |   ✅Single binary     | ✅By types, bridges and bonds | ✅                          |     💪Planned    |         💪Planned   | 💪Planned                   |
-| [newrushbolt/prometheus-ethtool-exporter](https://github.com/newrushbolt/prometheus-ethtool-exporter)                   |   ❌Python + modules  | ❌Only regexps                | ✅                          |     ❌           |         ❌          | ❌                          |
-| [adeverteuil/ethtool_exporter](https://github.com/adeverteuil/ethtool_exporter)                                         |   ❌Python + modules  | ❌Only regexps                | ❌Not really, only one case |     ❌           |         ❌          | ❌                          |
-| [Showmax/prometheus-ethtool-exporter](https://github.com/Showmax/prometheus-ethtool-exporter)                           |   ❌Python + modules  | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset                 |
-| [slyngshede/prometheus-ethtool-exporter](https://gitlab-replica-b.wikimedia.org/slyngshede/prometheus-ethtool-exporter) |   ❌Python + modules  | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset, Debian package |
+|                                                    Exporter                                                             | Deploy dependencies   |    Missing metric detection    |        Port discovery        |         Test data          | Provides alerts | Provides dashboards |   Provides deploy methods   |
+|-------------------------------------------------------------------------------------------------------------------------|-----------------------|------------------------------- | ------------------------------|----------------------------|-----------------|---------------------|-----------------------------|
+| [prometheus/node_exporter](https://github.com/prometheus/node_exporter/blob/master/collector/ethtool_linux.go)          |   ✅Single binary     |                ❌               | ❌Only regexps                | 🧩Only synthetic            |     🧩3rd party  |         ❌          | ✅                          |
+| [influxdata/telegraf](https://github.com/influxdata/telegraf/blob/master/plugins/inputs/ethtool)                        |   ✅Single binary     |                ❌               | ❌Only regexps                | 🧩Partly                    |     🧩3rd party  |         ❌          | ✅                          |
+| [newrushbolt/go-ethtool-exporter](https://github.com/newrushbolt/go-ethtool-exporter)                                   |   ✅Single binary     | ✅ Per collector and per metric | ✅By types, bridges and bonds | ✅                          |     💪Planned    |         💪Planned   | 💪Planned                   |
+| [newrushbolt/prometheus-ethtool-exporter](https://github.com/newrushbolt/prometheus-ethtool-exporter)                   |   ❌Python + modules  |                ❌               | ❌Only regexps                | ✅                          |     ❌           |         ❌          | ❌                          |
+| [adeverteuil/ethtool_exporter](https://github.com/adeverteuil/ethtool_exporter)                                         |   ❌Python + modules  |                ❌               | ❌Only regexps                | ❌Not really, only one case |     ❌           |         ❌          | ❌                          |
+| [Showmax/prometheus-ethtool-exporter](https://github.com/Showmax/prometheus-ethtool-exporter)                           |   ❌Python + modules  |                ❌               | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset                 |
+| [slyngshede/prometheus-ethtool-exporter](https://gitlab-replica-b.wikimedia.org/slyngshede/prometheus-ethtool-exporter) |   ❌Python + modules  |                ❌               | ❌Only regexps                | ❌                          |     ❌           |         ❌          | 🧩Daemonset, Debian package |
 
 ## Usage
 
@@ -92,6 +92,9 @@ Discovered following ports:
   - eth0
   - gretap0
 ```
+
+### Missing metrics detection
+
 
 ### All available options
 

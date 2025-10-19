@@ -17,17 +17,19 @@ import (
 )
 
 type CollectorConfig struct {
-	GenericInfo                  generic_info.CollectConfig
-	DriverInfo                   driver_info.CollectConfig
-	ModuleInfo                   module_info.CollectConfig
-	Statistics                   statistics.CollectConfig
-	EthtoolPath                  string
-	EthtoolTimeout               time.Duration
-	KeepAbsentMetricsModuleInfo  bool
-	KeepAbsentMetricsGenericInfo bool
-	KeepAbsentMetricsDriverInfo  bool
-	KeepAbsentMetricsStatistics  bool
-	ListLabelFormat              string
+	// Per-collector configs
+	GenericInfo              generic_info.CollectConfig
+	GenericInfoAbsentMetrics metrics.AbsentMetricsConfig
+	DriverInfo               driver_info.CollectConfig
+	DriverInfoAbsentMetrics  metrics.AbsentMetricsConfig
+	ModuleInfo               module_info.CollectConfig
+	ModuleInfoAbsentMetrics  metrics.AbsentMetricsConfig
+	Statistics               statistics.CollectConfig
+	StatisticsAbsentMetrics  metrics.AbsentMetricsConfig
+	// Common configs
+	EthtoolPath     string
+	EthtoolTimeout  time.Duration
+	ListLabelFormat string
 }
 
 func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath string, ethtoolTimeout time.Duration) string {
@@ -55,42 +57,42 @@ func readEthtoolData(interfaceName string, ethtoolMode string, ethtoolPath strin
 }
 
 type metricCollector struct {
-	Name              string
-	Enabled           bool
-	EthtoolMode       string
-	KeepAbsentMetrics bool
-	ParseFunc         func(string) any
+	Name          string
+	Enabled       bool
+	EthtoolMode   string
+	ParseFunc     func(string) any
+	AbsentMetrics metrics.AbsentMetricsConfig
 }
 
 func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) registry.Registry {
 	collectors := []metricCollector{
 		{
-			Name:              "generic_info",
-			EthtoolMode:       "",
-			Enabled:           config.GenericInfo.CollectAdvertisedSettings || config.GenericInfo.CollectSupportedSettings || config.GenericInfo.CollectSettings,
-			ParseFunc:         func(raw string) any { return generic_info.ParseInfo(raw, &config.GenericInfo) },
-			KeepAbsentMetrics: config.KeepAbsentMetricsGenericInfo,
+			Name:          "driver_info",
+			EthtoolMode:   "-i",
+			Enabled:       config.DriverInfo.CollectCommon || config.DriverInfo.CollectFeatures,
+			ParseFunc:     func(raw string) any { return driver_info.ParseInfo(raw, &config.DriverInfo) },
+			AbsentMetrics: config.DriverInfoAbsentMetrics,
 		},
 		{
-			Name:              "driver_info",
-			EthtoolMode:       "-i",
-			Enabled:           config.DriverInfo.CollectCommon || config.DriverInfo.CollectFeatures,
-			ParseFunc:         func(raw string) any { return driver_info.ParseInfo(raw, &config.DriverInfo) },
-			KeepAbsentMetrics: config.KeepAbsentMetricsDriverInfo,
+			Name:          "generic_info",
+			EthtoolMode:   "",
+			Enabled:       config.GenericInfo.CollectAdvertisedSettings || config.GenericInfo.CollectSupportedSettings || config.GenericInfo.CollectSettings,
+			ParseFunc:     func(raw string) any { return generic_info.ParseInfo(raw, &config.GenericInfo) },
+			AbsentMetrics: config.GenericInfoAbsentMetrics,
 		},
 		{
-			Name:              "module_info",
-			EthtoolMode:       "-m",
-			Enabled:           config.ModuleInfo.CollectDiagnosticsAlarms || config.ModuleInfo.CollectDiagnosticsValues || config.ModuleInfo.CollectDiagnosticsWarnings || config.ModuleInfo.CollectVendor,
-			ParseFunc:         func(raw string) any { return module_info.ParseInfo(raw, &config.ModuleInfo) },
-			KeepAbsentMetrics: config.KeepAbsentMetricsModuleInfo,
+			Name:          "module_info",
+			EthtoolMode:   "-m",
+			Enabled:       config.ModuleInfo.CollectDiagnosticsAlarms || config.ModuleInfo.CollectDiagnosticsValues || config.ModuleInfo.CollectDiagnosticsWarnings || config.ModuleInfo.CollectVendor,
+			ParseFunc:     func(raw string) any { return module_info.ParseInfo(raw, &config.ModuleInfo) },
+			AbsentMetrics: config.ModuleInfoAbsentMetrics,
 		},
 		{
-			Name:              "statistics",
-			EthtoolMode:       "-S",
-			Enabled:           config.Statistics.General || config.Statistics.PerQueueGeneral || config.Statistics.PerQueuePerType,
-			ParseFunc:         func(raw string) any { return statistics.ParseInfo(raw, &config.Statistics) },
-			KeepAbsentMetrics: config.KeepAbsentMetricsStatistics,
+			Name:          "statistics",
+			EthtoolMode:   "-S",
+			Enabled:       config.Statistics.General || config.Statistics.PerQueueGeneral || config.Statistics.PerQueuePerType,
+			ParseFunc:     func(raw string) any { return statistics.ParseInfo(raw, &config.Statistics) },
+			AbsentMetrics: config.StatisticsAbsentMetrics,
 		},
 	}
 
@@ -107,11 +109,15 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 			continue
 		}
 		collectorLogger.Debug("Collecting metrics")
+		collectorLabels := map[string]string{
+			"collector": collector.Name,
+		}
 		dataRaw := readEthtoolData(interfaceName, collector.EthtoolMode, config.EthtoolPath, config.EthtoolTimeout)
 		collectorLogger.Debug("Got raw lines", "count", strings.Count(dataRaw, "\n"))
 		data := collector.ParseFunc(dataRaw)
 		before := len(metricRegistry)
-		metrics.MetricListFromStructs(data, &metricRegistry, []string{collector.Name}, deviceLabels, collector.KeepAbsentMetrics, config.ListLabelFormat)
+		metrics.MetricListFromStructs(data, &metricRegistry, []string{collector.Name}, deviceLabels, collector.AbsentMetrics, config.ListLabelFormat)
+		metricRegistry.AddLabelsToSomeMetrics(metrics.AbsentMetricDetailedName, collectorLabels)
 		collectorLogger.Debug("Final metrics", "count", len(metricRegistry)-before)
 	}
 

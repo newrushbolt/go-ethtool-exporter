@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"strings"
 )
 
@@ -47,4 +48,15 @@ func (registry *Registry) FormatTextfileString() string {
 
 	metrics := strings.Join(allMetricLines, "\n")
 	return metrics
+}
+
+func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraLabels map[string]string) {
+	for metricIndex, metricObj := range *registry {
+		if metricObj.Name == targetMetricName {
+			newLabels := map[string]string{}
+			maps.Insert(newLabels, maps.All(metricObj.Labels))
+			maps.Insert(newLabels, maps.All(extraLabels))
+			(*registry)[metricIndex].Labels = newLabels
+		}
+	}
 }

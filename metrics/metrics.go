@@ -16,6 +16,14 @@ import (
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/statistics"
 )
 
+const AbsentMetricDetailedName = "missing_metric_info"
+
+type AbsentMetricsConfig struct {
+	ExposeNan          bool
+	ExposeTotalCounter bool
+	ExposeDetailedInfo bool
+}
+
 func toSnakeCase(inputString string) string {
 	var replacePairs []string
 	for i := 1; i < len(inputString); i++ {
@@ -37,7 +45,7 @@ func toSnakeCase(inputString string) string {
 	return strings.ToLower(inputString)
 }
 
-func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, keepAbsentMetrics bool, listLabelFormat string) {
+func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, absentMetrics AbsentMetricsConfig, listLabelFormat string) {
 	// TODO: add counters for all kind of metric events: parsed structures, parsed floats, parsed nils, parse errors, etc
 	inputStructValue := reflect.ValueOf(inputStruct)
 	switch inputStructValue.Kind() {
@@ -46,22 +54,37 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		// TODO: Handle absent metrics logic due to flags
 		if !inputStructValue.IsNil() {
 			newPrefixes := slices.Clone(prefixes)
-			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
+			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, absentMetrics, listLabelFormat)
 		} else {
-			if !keepAbsentMetrics {
-				slog.Debug("Skipping nil pointer because keepAbsentMetrics=false", "prefixes", prefixes)
+			inputType := reflect.TypeOf(inputStruct)
+			if inputType != reflect.TypeOf((*float64)(nil)) {
+				slog.Debug("Skipping nil pointer, keeping nils only supporter for float64", "prefixes", prefixes, "type", inputType)
 				return
 			}
-			inputType := reflect.TypeOf(inputStruct)
-			if inputType == reflect.TypeOf((*float64)(nil)) {
-				if keepAbsentMetrics {
-					slog.Debug("Adding `Nan` for missing float64 metric", "prefixes", prefixes)
-					newPrefixes := slices.Clone(prefixes)
-					nanValue := math.NaN()
-					MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
+
+			if absentMetrics.ExposeNan {
+				slog.Debug("Adding `Nan` for missing float64 metric", "prefixes", prefixes)
+				newPrefixes := slices.Clone(prefixes)
+				nanValue := math.NaN()
+				MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, absentMetrics, listLabelFormat)
+			}
+
+			if absentMetrics.ExposeTotalCounter {
+				slog.Debug("To be implemented")
+			}
+
+			if absentMetrics.ExposeDetailedInfo {
+				missingMetricName := toSnakeCase(strings.Join(prefixes, "_"))
+				finalLabels := map[string]string{
+					"metric_name": missingMetricName,
 				}
-			} else {
-				slog.Debug("Skipping nil pointer, keeping nils only supporter for float64", "prefixes", prefixes, "type", inputType)
+				maps.Insert(finalLabels, maps.All(extraLabels))
+				metricRecord := registry.MetricRecord{
+					Name:   AbsentMetricDetailedName,
+					Labels: finalLabels,
+					Value:  1,
+				}
+				*metricList = append(*metricList, metricRecord)
 			}
 		}
 	// Handle structs
@@ -70,7 +93,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		for structFieldIndex := range inputStructValue.NumField() {
 			field := inputStructValue.Type().Field(structFieldIndex)
 			newPrefixes := append(prefixes, []string{field.Name}...)
-			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels, keepAbsentMetrics, listLabelFormat)
+			MetricListFromStructs(inputStructValue.Field(structFieldIndex).Interface(), metricList, newPrefixes, extraLabels, absentMetrics, listLabelFormat)
 		}
 	// Handle simple types
 	default:
@@ -101,7 +124,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 					labels := map[string]string{
 						"queue": fmt.Sprintf("%d", queue),
 					}
-					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels, keepAbsentMetrics, listLabelFormat)
+					MetricListFromStructs(queueMetrics, metricList, newPrefixes, labels, absentMetrics, listLabelFormat)
 				}
 				// Do not add metric for subspace itself
 				return
