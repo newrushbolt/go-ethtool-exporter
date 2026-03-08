@@ -10,6 +10,20 @@ import (
 
 type Registry []MetricRecord
 
+// OutputMetricNamespace is prepended to metric names while formatting metrics
+// for exposition. Internal metric names in Registry remain unprefixed.
+var OutputMetricNamespace = ""
+
+func namespacedMetricName(metricName string) string {
+	if OutputMetricNamespace == "" {
+		return metricName
+	}
+	if strings.HasPrefix(metricName, OutputMetricNamespace+"_") {
+		return metricName
+	}
+	return OutputMetricNamespace + "_" + metricName
+}
+
 func (metricRegistry *Registry) GetMetricIndex(metricName string) (int, error) {
 	var err error
 	metricsFoundIndexes := []int{}
@@ -40,14 +54,16 @@ func (registry *Registry) FormatTextfileString(format MetricsFormat) string {
 	seen := map[string]struct{}{}
 
 	for _, metric := range *registry {
-		metricString, err := metric.FormatPrometheusLine()
+		renderMetric := metric
+		renderMetric.Name = namespacedMetricName(metric.Name)
+		metricString, err := renderMetric.FormatPrometheusLine()
 		if err != nil {
 			slog.Error("Cannot format metric: ", "metricFormatError", err)
 			continue
 		}
 		allMetricLines = append(allMetricLines, metricString)
 		if format == OpenMetrics_1_0_0 {
-			seen[metric.Name] = struct{}{}
+			seen[renderMetric.Name] = struct{}{}
 		}
 	}
 

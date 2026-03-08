@@ -71,6 +71,9 @@ func TestExporterVersionBuildInfoError(t *testing.T) {
 }
 
 func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
+	registry.OutputMetricNamespace = ""
+	t.Cleanup(func() { registry.OutputMetricNamespace = "ethtool" })
+
 	expectedMetrics := `dummy_metric{foo="bar"} 42`
 	dir := t.TempDir()
 	textfileDirectory = &dir // override global pointer for test
@@ -111,6 +114,9 @@ func TestExporterDirectoryMustExist(t *testing.T) {
 func ptr[T any](v T) *T { return &v }
 
 func setupHttpHandlerFlags(t *testing.T) {
+	registry.OutputMetricNamespace = ""
+	t.Cleanup(func() { registry.OutputMetricNamespace = "ethtool" })
+
 	// Set test-specific overrides
 	portsRegexp := regexp.MustCompile("eth4")
 	discoverPortsRegexp = &portsRegexp

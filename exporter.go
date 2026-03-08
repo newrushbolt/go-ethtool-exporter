@@ -184,6 +184,7 @@ func MustDirectoryExist(dirPath *string) {
 func init() {
 	// Moved to separate `init()` in order to work both in exporter and tests
 	initLogger()
+	registry.OutputMetricNamespace = "ethtool"
 }
 
 func enableAllMetricCollectionFlags() {

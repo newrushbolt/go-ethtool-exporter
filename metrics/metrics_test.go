@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -203,6 +204,25 @@ func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
 	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "both")
 	metricResultString = metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedResultBoth, metricResultString)
+}
+
+func TestMetricListFromStructsDefaultNamespace(t *testing.T) {
+	oldNS := registry.OutputMetricNamespace
+	registry.OutputMetricNamespace = "ethtool"
+	defer func() { registry.OutputMetricNamespace = oldNS }()
+
+	type Sample struct {
+		RxBytes float64
+	}
+
+	input := Sample{RxBytes: 42}
+	metricRegistry := registry.Registry{}
+	MetricListFromStructs(input, &metricRegistry, []string{"statistics"}, map[string]string{"device": "eth0"}, AbsentMetricsConfig{}, "single-label")
+
+	result := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
+	assert.True(t, strings.Contains(result, "ethtool_statistics_rx_bytes{"), "metric name must have ethtool_ prefix")
+	assert.False(t, strings.Contains(result, "\nnode_"), "metric names must not start with node_")
+	assert.False(t, strings.HasPrefix(result, "node_"), "metric names must not start with node_")
 }
 
 // Just a snippet for fast testing with real metrics

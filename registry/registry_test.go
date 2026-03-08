@@ -116,3 +116,26 @@ func TestRegistryOpenMetricsAnnotations(t *testing.T) {
 	assert.Contains(t, result, "# TYPE m2 UNKNOWN")
 	assert.True(t, strings.HasSuffix(result, "# EOF"))
 }
+
+func TestNamespacedMetricName_EmptyNamespace(t *testing.T) {
+	// Temporarily overriding OutputMetricNamespace for testing
+	// Will be set back to "" by defer so it wont affect other tests
+	OutputMetricNamespace = ""
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "my_metric", namespacedMetricName("my_metric"))
+}
+
+func TestNamespacedMetricName_WithNamespace(t *testing.T) {
+	OutputMetricNamespace = "ethtool"
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "ethtool_my_metric", namespacedMetricName("my_metric"))
+}
+
+func TestNamespacedMetricName_AlreadyPrefixed(t *testing.T) {
+	OutputMetricNamespace = "ethtool"
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "ethtool_my_metric", namespacedMetricName("ethtool_my_metric"))
+}
