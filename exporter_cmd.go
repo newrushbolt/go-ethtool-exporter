@@ -34,6 +34,11 @@ var (
 	// FLAG GROUP START: Various paths settings
 	linuxNetClassPath = kingpin.Flag("path.sysfs.net.class", "").Default("/sys/class/net").ExistingDir()
 	textfileDirectory = kingpin.Flag("path.textfile-directory", "Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
+	// format used when writing metrics to a textfile (either via single-textfile or loop-textfile).
+	// uses Enum to limit choices like listLabelFormat does; result is a *string.
+	textfileFormatStr = kingpin.Flag("textfile-format", "Format for textfile output").
+				Default("prometheus-0.0.4").
+				Enum("prometheus-0.0.4", "openmetrics-1.0.0")
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, enabled by default
@@ -94,4 +99,5 @@ var (
 	statisticsGenerateMissingPerQueueMetrics = kingpin.Flag("statistics-generate-missing-per-queue-metrics", "Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)").Default("true").Bool()
 	listLabelFormat                          = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
 	// FLAG GROUP END
+
 )

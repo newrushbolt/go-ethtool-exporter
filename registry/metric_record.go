@@ -26,11 +26,10 @@ func (metricRecord *MetricRecord) FormatPrometheusLine() (string, error) {
 	slices.Sort(sortedLabelKeys)
 	for _, labelName := range sortedLabelKeys {
 		labelValue := metricRecord.Labels[labelName]
-		cleanlabelName, cleanlabelValue := sanitizelabelPair(labelName, labelValue)
-		// if err != nil {
-		// 	slog.Error("Skipping label for metric", "metric", metricRecord.Name, "error", err)
-		// 	continue
-		// }
+		cleanlabelName, cleanlabelValue, keep := sanitizelabelPair(labelName, labelValue)
+		if !keep {
+			continue
+		}
 		labelString := fmt.Sprintf("%s=\"%s\"", cleanlabelName, cleanlabelValue)
 		labelStringsList = append(labelStringsList, labelString)
 	}

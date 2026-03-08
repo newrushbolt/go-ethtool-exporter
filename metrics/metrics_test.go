@@ -34,7 +34,7 @@ func TestDropAllNils(t *testing.T) {
 	labels := map[string]string{}
 	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "single-label")
 
-	metricRegistryResult := metricRegistry.FormatTextfileString()
+	metricRegistryResult := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
 }
 
@@ -67,7 +67,7 @@ prefix_nil_float64{} NaN`
 	}
 	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, absentMetrics, "single-label")
 
-	metricRegistryResult := metricRegistry.FormatTextfileString()
+	metricRegistryResult := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
 }
 
@@ -89,7 +89,7 @@ func TestMissingMetricsExposeDetailedInfo(t *testing.T) {
 	}
 	MetricListFromStructs(nilObject, &metricRegistry, prefixes, labels, absentMetrics, "single-label")
 
-	metricRegistryResult := metricRegistry.FormatTextfileString()
+	metricRegistryResult := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, metricRegistryResult)
 }
 
@@ -155,7 +155,7 @@ prefprefix_per_qstats_general_tx_bytes{queue="0"} 123`
 	}
 	MetricListFromStructs(abstractData, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "single-label")
 
-	metricResultString := metricRegistry.FormatTextfileString()
+	metricResultString := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, metricResultString)
 }
 
@@ -196,12 +196,12 @@ func TestMetricListFromStructsListMultipleLabels(t *testing.T) {
 	labels := map[string]string{}
 
 	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "multi-label")
-	metricResultString := metricRegistry.FormatTextfileString()
+	metricResultString := metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedResultMultilabel, metricResultString)
 
 	metricRegistry = registry.Registry{}
 	MetricListFromStructs(driverInfo, &metricRegistry, prefixes, labels, AbsentMetricsConfig{}, "both")
-	metricResultString = metricRegistry.FormatTextfileString()
+	metricResultString = metricRegistry.FormatTextfileString(registry.Prometheus_0_0_4)
 	assert.Equal(t, expectedResultBoth, metricResultString)
 }
 

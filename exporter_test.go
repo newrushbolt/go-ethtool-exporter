@@ -8,6 +8,7 @@ import (
 	"path"
 	"regexp"
 	"runtime/debug"
+	"strings"
 	"testing"
 	"time"
 
@@ -85,7 +86,7 @@ func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
 		"eth0": eth0Registry,
 	}
 
-	writeAllMetricsToTextfiles(registries)
+	writeAllMetricsToTextfiles(registries, registry.Prometheus_0_0_4)
 
 	filePath := dir + "/ethtool_exporter.prom"
 	metrics, err := os.ReadFile(filePath)
@@ -226,6 +227,45 @@ func TestExporterHttpMetricsHandlerFail(t *testing.T) {
 	assert.Equal(t, expectedMetricResult, string(body))
 }
 
+func TestExporterHttpMetricsHandlerOpenMetrics(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	req.Header.Set("Accept", registry.OpenMetrics_1_0_0.ContentType())
+	metricsHandler(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, registry.OpenMetrics_1_0_0.ContentType(), resp.Header.Get("Content-Type"))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+
+	// Expect that body starts with a TYPE annotation and ends with EOF marker
+	assert.True(t, strings.HasPrefix(string(body), "# TYPE"), "body should start with TYPE")
+	assert.True(t, strings.HasSuffix(string(body), "# EOF"), "body should end with EOF")
+}
+
+func TestExporterHttpMetricsHandlerUnsupportedAccept(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	req.Header.Set("Accept", "application/json")
+
+	loggingAndFilterMiddleware(http.HandlerFunc(metricsHandler)).ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotAcceptable, resp.StatusCode)
+}
+
 type errorWriter struct {
 	http.ResponseWriter
 }
@@ -264,7 +304,7 @@ func TestExporterSingleTextfile(t *testing.T) {
 	*textfileDirectory, err = os.MkdirTemp(".", ".test-textfiles-*")
 	defer os.RemoveAll(*textfileDirectory)
 	assert.NoError(t, err)
-	runSingleTextfileCommand()
+	runSingleTextfileCommand(registry.Prometheus_0_0_4)
 
 	expectedMetricBytes, err := os.ReadFile("testdata/eth4.generic_info.prom")
 	if err != nil {
@@ -279,4 +319,29 @@ func TestExporterSingleTextfile(t *testing.T) {
 	resultedMetrics := string(resultedMetricsBytes)
 
 	assert.Equal(t, expectedMetric, resultedMetrics)
+}
+
+func TestExporterSingleTextfileOpenMetrics(t *testing.T) {
+	setupHttpHandlerFlags(t)
+	var err error
+	*textfileDirectory, err = os.MkdirTemp(".", ".test-textfiles-*")
+	defer os.RemoveAll(*textfileDirectory)
+	assert.NoError(t, err)
+
+	// request openmetrics format explicitly
+	runSingleTextfileCommand(registry.OpenMetrics_1_0_0)
+
+	expectedMetricBytes, err := os.ReadFile("testdata/eth4.generic_info.openmetrics.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetric := string(expectedMetricBytes)
+
+	resultedMetricsBytes, err := os.ReadFile(path.Join(*textfileDirectory, "ethtool_exporter.prom"))
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	resultedMetrics := string(resultedMetricsBytes)
+
+	assert.Equal(t, strings.TrimSpace(expectedMetric), strings.TrimSpace(resultedMetrics))
 }

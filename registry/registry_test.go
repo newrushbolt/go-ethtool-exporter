@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestRegistrySimpleMetric(t *testing.T) {
 	}
 	metricList = append(metricList, metricRecordSimple)
 
-	metricsResult := metricList.FormatTextfileString()
+	metricsResult := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, string(metricsResult))
 }
 
@@ -51,7 +52,7 @@ func TestRegistryTooManyLabels(t *testing.T) {
 	var metricList Registry
 	metricList = append(metricList, metricRecordTooMuchLabels)
 
-	metricsResult := metricList.FormatTextfileString()
+	metricsResult := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Empty(t, string(metricsResult))
 }
 
@@ -70,7 +71,7 @@ func TestTextfileWriteError(t *testing.T) {
 		Value:  1,
 	})
 	dirPath := os.TempDir()
-	metrics := metricList.FormatTextfileString()
+	metrics := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Panics(t, func() { MustWriteTextfile(dirPath, metrics) })
 }
 
@@ -103,4 +104,15 @@ func TestGetMetricIndex_MultipleMatches(t *testing.T) {
 	assert.Equal(t, -1, idx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "multiple metrics with the same name <foo>")
+}
+
+func TestRegistryOpenMetricsAnnotations(t *testing.T) {
+	var metricList Registry
+	metricList = append(metricList, MetricRecord{Name: "m1", Labels: nil, Value: 1})
+	metricList = append(metricList, MetricRecord{Name: "m2", Labels: map[string]string{"k": "v"}, Value: 2})
+	result := metricList.FormatTextfileString(OpenMetrics_1_0_0)
+	// should contain TYPE lines for both metrics and EOF at the end
+	assert.Contains(t, result, "# TYPE m1 UNKNOWN")
+	assert.Contains(t, result, "# TYPE m2 UNKNOWN")
+	assert.True(t, strings.HasSuffix(result, "# EOF"))
 }

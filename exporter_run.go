@@ -6,11 +6,11 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/newrushbolt/go-ethtool-exporter/interfaces"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"golang.org/x/net/netutil"
 )
 
@@ -28,19 +28,19 @@ func runDiscoverPortsCommand() {
 	}
 }
 
-func runSingleTextfileCommand() {
+func runSingleTextfileCommand(format registry.MetricsFormat) {
 	// Single textfile mode
 	MustDirectoryExist(textfileDirectory)
 	metricRegistries := collectMetrics()
-	writeAllMetricsToTextfiles(metricRegistries)
+	writeAllMetricsToTextfiles(metricRegistries, format)
 }
 
-func runLoopTextfileCommand() {
+func runLoopTextfileCommand(format registry.MetricsFormat) {
 	// Loop textfile mode
 	MustDirectoryExist(textfileDirectory)
 	for {
 		metricRegistries := collectMetrics()
-		writeAllMetricsToTextfiles(metricRegistries)
+		writeAllMetricsToTextfiles(metricRegistries, format)
 		time.Sleep(*loopTextfileUpdateInterval)
 	}
 }
@@ -48,21 +48,16 @@ func runLoopTextfileCommand() {
 // Middleware for logging requests and filtering
 func loggingAndFilterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("HTTP request", "method", r.Method, "url", r.URL.String(), "remote", r.RemoteAddr, "content-type", r.Header.Get("Content-Type"))
+		slog.Info("HTTP request", "method", r.Method, "url", r.URL.String(), "remote", r.RemoteAddr, "accept", r.Header.Get("Accept"))
 
 		if r.Method != http.MethodGet {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		contentTypeHeader := r.Header.Get("Content-Type")
-		allowedContentTypes := []string{
-			"",
-			"text/plain",
-			"text/plain; version=0.0.4",
-		}
-		if !slices.Contains(allowedContentTypes, contentTypeHeader) {
-			http.Error(w, "Unsupported Content-Type", http.StatusUnsupportedMediaType)
+		// ensure the client accepts one of the supported response formats
+		if _, err := registry.NegotiateFormat(r); err != nil {
+			http.Error(w, "Not Acceptable", http.StatusNotAcceptable)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -77,10 +72,17 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	metricRegistries := collectMetrics()
-	// The same as in node_exporter :shrug:
-	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8; escaping=underscores")
-	allMetrics := metricRegistries.GetAllMetricsText()
-	_, err := w.Write([]byte(allMetrics))
+	// Determine the format to render; middleware should have already validated the
+	// header, but we repeat the parsing here in case the handler is called
+	// directly by tests.
+	format, err := registry.NegotiateFormat(r)
+	if err != nil {
+		http.Error(w, "Not Acceptable", http.StatusNotAcceptable)
+		return
+	}
+	w.Header().Set("Content-Type", format.ContentType())
+	allMetrics := metricRegistries.GetAllMetricsText(format)
+	_, err = w.Write([]byte(allMetrics))
 	if err != nil {
 		slog.Error("Failed to write response", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

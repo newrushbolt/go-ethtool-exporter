@@ -35,6 +35,8 @@ Various paths settings:
   --path.sysfs.net.class=/sys/class/net
   --path.textfile-directory=/var/lib/node-exporter/textfiles
     Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes
+  --textfile-format=prometheus-0.0.4
+    Format for textfile output. Possible values are: prometheus-0.0.4, openmetrics-1.0.0
 
 Collectors, enabled by default:
   --no-collect-generic-info-settings

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"slices"
 	"strings"
 )
 
@@ -33,8 +34,10 @@ func (metricRegistry *Registry) GetMetricIndex(metricName string) (int, error) {
 	}
 }
 
-func (registry *Registry) FormatTextfileString() string {
+func (registry *Registry) FormatTextfileString(format MetricsFormat) string {
 	var allMetricLines []string
+	// keep track of seen metric names for OpenMetrics TYPE annotations
+	seen := map[string]struct{}{}
 
 	for _, metric := range *registry {
 		metricString, err := metric.FormatPrometheusLine()
@@ -43,11 +46,30 @@ func (registry *Registry) FormatTextfileString() string {
 			continue
 		}
 		allMetricLines = append(allMetricLines, metricString)
-
+		if format == OpenMetrics_1_0_0 {
+			seen[metric.Name] = struct{}{}
+		}
 	}
 
-	metrics := strings.Join(allMetricLines, "\n")
-	return metrics
+	// assemble output based on format
+	switch format {
+	case OpenMetrics_1_0_0:
+		// prepend TYPE annotations in deterministic order
+		var types []string
+		for name := range seen {
+			types = append(types, name)
+		}
+		slices.Sort(types)
+		var outLines []string
+		for _, name := range types {
+			outLines = append(outLines, "# TYPE "+name+" UNKNOWN")
+		}
+		outLines = append(outLines, allMetricLines...)
+		outLines = append(outLines, "# EOF")
+		return strings.Join(outLines, "\n")
+	default:
+		return strings.Join(allMetricLines, "\n")
+	}
 }
 
 func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraLabels map[string]string) {

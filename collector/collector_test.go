@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/newrushbolt/go-ethtool-exporter/metrics"
+	"github.com/newrushbolt/go-ethtool-exporter/registry"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/driver_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/generic_info"
 	"github.com/newrushbolt/go-ethtool-metrics/pkg/metrics/module_info"
@@ -126,7 +127,7 @@ func TestGenericIntelCollectInterfaceMetrics(t *testing.T) {
 		StatisticsAbsentMetrics:  metrics.AbsentMetricsConfig{},
 	}
 
-	registry := CollectInterfaceMetrics("eth4", collectorConfig)
+	reg := CollectInterfaceMetrics("eth4", collectorConfig)
 
-	assert.Equal(t, expectedMetricResult, registry.FormatTextfileString())
+	assert.Equal(t, expectedMetricResult, reg.FormatTextfileString(registry.Prometheus_0_0_4))
 }
