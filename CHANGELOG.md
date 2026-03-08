@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.14](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.13...v0.0.14) (2026-03-08)
+
+
+### Bug Fixes
+
+* add basic alerts and tests for them ([8a37fcf](https://github.com/newrushbolt/go-ethtool-exporter/commit/8a37fcf47f9a0a854c56b3286c015262db6b0a86))
+* adjust default collectors ([cc1c196](https://github.com/newrushbolt/go-ethtool-exporter/commit/cc1c196b3e4da181bd0a4c9d1f2a3b9c21e3dcc4))
+* allow collecting XDP per-queue metrics ([5379e9b](https://github.com/newrushbolt/go-ethtool-exporter/commit/5379e9b8935a6681b488912f8fb5a430919ad144))
+* per-collector missing metrics Nan, total counters and detailed info ([cf6cf89](https://github.com/newrushbolt/go-ethtool-exporter/commit/cf6cf890f45889ad6e7f04b70c8c9c829b5bd8c6))
+
 ## [0.0.13](https://github.com/newrushbolt/go-ethtool-exporter/compare/v0.0.12...v0.0.13) (2025-08-27)
 
 
