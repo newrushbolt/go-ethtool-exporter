@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os/exec"
+	"reflect"
 	"strings"
 	"time"
 
@@ -115,9 +116,21 @@ func CollectInterfaceMetrics(interfaceName string, config CollectorConfig) regis
 		dataRaw := readEthtoolData(interfaceName, collector.EthtoolMode, config.EthtoolPath, config.EthtoolTimeout)
 		collectorLogger.Debug("Got raw lines", "count", strings.Count(dataRaw, "\n"))
 		data := collector.ParseFunc(dataRaw)
+		if data == nil || reflect.ValueOf(data).IsNil() {
+			collectorLogger.Info("Module got empty ethtool data, skipping")
+			continue
+		}
+
 		before := len(metricRegistry)
 		metrics.MetricListFromStructs(data, &metricRegistry, []string{collector.Name}, deviceLabels, collector.AbsentMetrics, config.ListLabelFormat)
+		// Adding per-collector labels
 		metricRegistry.AddLabelsToSomeMetrics(metrics.AbsentMetricDetailedName, collectorLabels)
+		metricRegistry.AddLabelsToSomeMetrics(metrics.AbsentMetricTotalName, collectorLabels)
+		// We don't have flags for these metrics, so we are
+		// Only adding per-device metrics to lower cardinality
+		metricRegistry.AddLabelsToSomeMetrics(metrics.AbsentMetricSkippedTotalName, deviceLabels)
+		metricRegistry.AddLabelsToSomeMetrics(metrics.MetricParseErrorTotalName, deviceLabels)
+
 		collectorLogger.Debug("Final metrics", "count", len(metricRegistry)-before)
 	}
 

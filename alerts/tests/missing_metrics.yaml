@@ -1,0 +1,87 @@
+---
+# https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
+
+rule_files:
+    - ../missing_metrics.yaml
+
+tests:
+    # Counter-based alert: EthtoolMissingMetrics
+    - interval: 1m
+      input_series:
+          # module_info incrementing - should trigger
+          - series: ethtool_missing_metrics_total{collector="module_info", device="eth0", instance="127.0.0.1:9100"}
+            values: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+          # generic_info incrementing - should trigger
+          - series: ethtool_missing_metrics_total{collector="generic_info", device="eth2", instance="127.0.0.1:9100"}
+            values: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+          # statistics incrementing - should trigger
+          - series: ethtool_missing_metrics_total{collector="statistics", device="eth3", instance="127.0.0.1:9100"}
+            values: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+          # Stable counter - should NOT trigger
+          - series: ethtool_missing_metrics_total{collector="module_info", device="eth1", instance="127.0.0.1:9100"}
+            values: 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+
+      alert_rule_test:
+          - alertname: EthtoolMissingMetrics
+            eval_time: 20m
+            exp_alerts:
+              - exp_labels:
+                  collector: module_info
+                  device: eth0
+                  instance: 127.0.0.1:9100
+                  severity: warn
+                exp_annotations:
+                  summary: "Ethtool exporter is missing module_info metrics for interface eth0"
+                  action: "Check exporter logs with LOG_LEVEL=DEBUG for details. Make sure driver and firmware are compatible, and the transceiver is present"
+              - exp_labels:
+                  collector: generic_info
+                  device: eth2
+                  instance: 127.0.0.1:9100
+                  severity: warn
+                exp_annotations:
+                  summary: "Ethtool exporter is missing generic_info metrics for interface eth2"
+                  action: "Check exporter logs with LOG_LEVEL=DEBUG for details. Make sure driver and firmware are compatible, and the transceiver is present"
+              - exp_labels:
+                  collector: statistics
+                  device: eth3
+                  instance: 127.0.0.1:9100
+                  severity: warn
+                exp_annotations:
+                  summary: "Ethtool exporter is missing statistics metrics for interface eth3"
+                  action: "Check exporter logs with LOG_LEVEL=DEBUG for details. Make sure driver and firmware are compatible, and the transceiver is present"
+
+    # Detailed info alert: EthtoolMissingMetricDetailed
+    - interval: 5m
+      input_series:
+          # module_info missing metric - should trigger
+          - series: ethtool_missing_metric_info{collector="module_info", device="eth0", instance="127.0.0.1:9100", metric_name="ethtool_module_info_diagnostics_alarms_output_low"}
+            values: 1 1 1 1
+          # generic_info missing metric - should trigger
+          - series: ethtool_missing_metric_info{collector="generic_info", device="eth2", instance="127.0.0.1:9100", metric_name="ethtool_generic_info_settings_speed_bytes"}
+            values: 1 1 1 1
+          # Value 0 - should NOT trigger
+          - series: ethtool_missing_metric_info{collector="module_info", device="eth1", instance="127.0.0.1:9100", metric_name="ethtool_module_info_diagnostics_alarms_output_low"}
+            values: 0 0 0 0
+
+      alert_rule_test:
+          - alertname: EthtoolMissingMetricDetailed
+            eval_time: 16m
+            exp_alerts:
+              - exp_labels:
+                  collector: module_info
+                  device: eth0
+                  instance: 127.0.0.1:9100
+                  metric_name: ethtool_module_info_diagnostics_alarms_output_low
+                  severity: high
+                exp_annotations:
+                  summary: "Ethtool exporter is missing module_info metric ethtool_module_info_diagnostics_alarms_output_low for interface eth0"
+                  action: "Make sure driver and firmware are compatible, and the transceiver is present"
+              - exp_labels:
+                  collector: generic_info
+                  device: eth2
+                  instance: 127.0.0.1:9100
+                  metric_name: ethtool_generic_info_settings_speed_bytes
+                  severity: high
+                exp_annotations:
+                  summary: "Ethtool exporter is missing generic_info metric ethtool_generic_info_settings_speed_bytes for interface eth2"
+                  action: "Make sure driver and firmware are compatible, and the transceiver is present"

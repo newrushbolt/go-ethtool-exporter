@@ -73,23 +73,18 @@ var (
 	// Detect aliases and naming types?
 	// FLAG GROUP END
 
-	// To be moved
-	//  Keep absent metrics, setting 'Nan' value for every metric that was not found
-	// Absent metrics (*float64 nil) behavior
-	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.10?tab=readme-ov-file#missing-metrics
-
-	// FLAG GROUP START: Absent metrics exposure. This controls how to expose missing metrics: via Nan values of the same metrics, via counter metrics, counting how many metrics are missing per collector, or via special per-metric metrics, exposing full missing label name via label
+	// FLAG GROUP START: Absent metrics exposure. Read more in file:///./ABSENT_METRICS.md
 	absentMetricsDriverInfoExposeNan           = kingpin.Flag("absent-metrics-driver-info-expose-nan", "").Default("false").Bool()
-	absentMetricsDriverInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-driver-info-expose-total-counter", "").Default("false").Bool()
+	absentMetricsDriverInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-driver-info-expose-total-counter", "").Default("true").Bool()
 	absentMetricsDriverInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-driver-info-expose-detailed-info", "").Default("false").Bool()
 	absentMetricsGenericInfoExposeNan          = kingpin.Flag("absent-metrics-generic-info-expose-nan", "").Default("false").Bool()
-	absentMetricsGenericInfoExposeTotalCounter = kingpin.Flag("absent-metrics-generic-info-expose-total-counter", "").Default("false").Bool()
+	absentMetricsGenericInfoExposeTotalCounter = kingpin.Flag("absent-metrics-generic-info-expose-total-counter", "").Default("true").Bool()
 	absentMetricsGenericInfoExposeDetailedInfo = kingpin.Flag("absent-metrics-generic-info-expose-detailed-info", "").Default("false").Bool()
-	absentMetricsModuleInfoExposeNan           = kingpin.Flag("absent-metrics-module-info-expose-nan", "").Default("true").Bool()
-	absentMetricsModuleInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-module-info-expose-total-counter", "").Default("false").Bool()
-	absentMetricsModuleInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-module-info-expose-detailed-info", "").Default("false").Bool()
+	absentMetricsModuleInfoExposeNan           = kingpin.Flag("absent-metrics-module-info-expose-nan", "").Default("false").Bool()
+	absentMetricsModuleInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-module-info-expose-total-counter", "").Default("true").Bool()
+	absentMetricsModuleInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-module-info-expose-detailed-info", "").Default("true").Bool()
 	absentMetricsStatisticsExposeNan           = kingpin.Flag("absent-metrics-statistics-expose-nan", "").Default("false").Bool()
-	absentMetricsStatisticsExposeTotalCounter  = kingpin.Flag("absent-metrics-statistics-expose-total-counter", "").Default("false").Bool()
+	absentMetricsStatisticsExposeTotalCounter  = kingpin.Flag("absent-metrics-statistics-expose-total-counter", "").Default("true").Bool()
 	absentMetricsStatisticsExposeDetailedInfo  = kingpin.Flag("absent-metrics-statistics-expose-detailed-info", "").Default("false").Bool()
 	// FLAG GROUP END
 

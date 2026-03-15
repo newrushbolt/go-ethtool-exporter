@@ -139,3 +139,36 @@ func TestNamespacedMetricName_AlreadyPrefixed(t *testing.T) {
 
 	assert.Equal(t, "ethtool_my_metric", namespacedMetricName("ethtool_my_metric"))
 }
+
+func TestSetGauge_NewMetric(t *testing.T) {
+	var reg Registry
+	labels := map[string]string{"iface": "eth0"}
+	reg.SetGauge("temperature", labels, 42.5)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}, reg)
+}
+
+func TestSetGauge_UpdateExisting(t *testing.T) {
+	reg := Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}
+	reg.SetGauge("temperature", map[string]string{"iface": "eth0"}, 99.0)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 99.0},
+	}, reg)
+}
+
+func TestSetGauge_DifferentLabelsAddsNew(t *testing.T) {
+	reg := Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}
+	reg.SetGauge("temperature", map[string]string{"iface": "eth1"}, 10.0)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+		{Name: "temperature", Labels: map[string]string{"iface": "eth1"}, Value: 10.0},
+	}, reg)
+}

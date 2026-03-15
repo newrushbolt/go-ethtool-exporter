@@ -1,0 +1,26 @@
+---
+groups:
+- name: Ethtool SFP
+  rules:
+  - alert: NetworkTransceiverWarning
+    expr: >-
+        {__name__=~"module_info_diagnostics_warnings_.*"} > 0
+    for: 15m
+    labels:
+      severity: warn
+    annotations:
+      summary: >-
+        Transceiver in network interface {{ $labels.device }} has diagnostic warning: {{ $labels.__name__ }}
+      actions: &ethtool_sfp_action >-
+        Check the `ethtool -m` on server and `show interfaces transceiver` on switch for more info. You may need to replace the "transceiver+optics+transceiver" bundle.
+  - alert: NetworkTransceiverAlarm
+    expr: >-
+        {__name__=~"module_info_diagnostics_alarms_.*"} > 0
+    for: 5m
+    labels:
+      severity: high
+    annotations:
+      summary: >-
+        Transceiver in network interface {{ $labels.device }} has diagnostic alarm: {{ $labels.__name__ }}
+      actions: *ethtool_sfp_action
+

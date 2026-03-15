@@ -78,6 +78,7 @@ func (registry *Registry) FormatTextfileString(format MetricsFormat) string {
 		slices.Sort(types)
 		var outLines []string
 		for _, name := range types {
+			// TODO: find a way to determine actual metric type
 			outLines = append(outLines, "# TYPE "+name+" UNKNOWN")
 		}
 		outLines = append(outLines, allMetricLines...)
@@ -86,6 +87,15 @@ func (registry *Registry) FormatTextfileString(format MetricsFormat) string {
 	default:
 		return strings.Join(allMetricLines, "\n")
 	}
+}
+
+func (registry *Registry) getMetricIndexByNameAndLabels(metricName string, labels map[string]string) int {
+	for idx, record := range *registry {
+		if record.Name == metricName && maps.Equal(record.Labels, labels) {
+			return idx
+		}
+	}
+	return -1
 }
 
 func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraLabels map[string]string) {
@@ -97,4 +107,30 @@ func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraL
 			(*registry)[metricIndex].Labels = newLabels
 		}
 	}
+}
+
+func (registry *Registry) IncrementCounter(metricName string, labels map[string]string, incrementValue float64) {
+	idx := registry.getMetricIndexByNameAndLabels(metricName, labels)
+	if idx != -1 {
+		(*registry)[idx].Value += incrementValue
+		return
+	}
+	*registry = append(*registry, MetricRecord{
+		Name:   metricName,
+		Labels: maps.Clone(labels),
+		Value:  incrementValue,
+	})
+}
+
+func (registry *Registry) SetGauge(metricName string, labels map[string]string, value float64) {
+	idx := registry.getMetricIndexByNameAndLabels(metricName, labels)
+	if idx != -1 {
+		(*registry)[idx].Value = value
+		return
+	}
+	*registry = append(*registry, MetricRecord{
+		Name:   metricName,
+		Labels: maps.Clone(labels),
+		Value:  value,
+	})
 }

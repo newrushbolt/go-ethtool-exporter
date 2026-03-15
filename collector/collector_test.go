@@ -73,9 +73,10 @@ func TestEmptyCollectInterfaceMetrics(t *testing.T) {
 		StatisticsAbsentMetrics:  metrics.AbsentMetricsConfig{},
 	}
 
-	registry := CollectInterfaceMetrics("eth0", collectorConfig)
+	result := CollectInterfaceMetrics("eth0", collectorConfig)
 
-	assert.Len(t, registry, 0)
+	assert.Len(t, result, 0)
+
 }
 
 // Test with real intel metrics

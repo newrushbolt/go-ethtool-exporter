@@ -2,20 +2,11 @@
 # https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/
 
 rule_files:
-    - sfp_warnings_alarms.rules.yaml
+    - ../sfp_warnings_alarms.yaml
 
 tests:
     - interval: 5m
       input_series:
-          - series: driver_info_features_test{instance="127.0.0.1:9100", device="eno2np1"}
-            values: 1 1 1 1
-          - series: driver_info_features_test{instance="127.0.0.1:9100", device="eno2np2"}
-            values: 1 1 1 1
-          - series: generic_info_settings_info{Port="FIBRE",instance="127.0.0.1:9100", device="eno2np1"}
-            values: 1 1 1 1
-          - series: generic_info_settings_info{Port="FIBRE",instance="127.0.0.1:9100", device="eno2np2"}
-            values: 1 1 1 1
-
           - series: module_info_diagnostics_alarms_bias_high{instance="127.0.0.1:9100", device="eno2np1"}
             values: 0 0 0 0
           - series: module_info_diagnostics_alarms_bias_low{instance="127.0.0.1:9100", device="eno2np1"}
@@ -57,9 +48,6 @@ tests:
           - series: module_info_diagnostics_warnings_input_power_low{instance="127.0.0.1:9100", device="eno2np1"}
             values: 0 0 0 0
 
-          - series: module_info_diagnostics_warnings_input_power_low{instance="127.0.0.1:9100", device="eno2np2"}
-            values: Nan Nan Nan Nan
-
       alert_rule_test:
           - alertname: NetworkTransceiverWarning
             eval_time: 16m
@@ -81,14 +69,3 @@ tests:
                 exp_annotations:
                   summary: "Transceiver in network interface eno2np1 has diagnostic alarm: module_info_diagnostics_alarms_voltage_high"
                   actions: "Check the `ethtool -m` on server and `show interfaces transceiver` on switch for more info. You may need to replace the \"transceiver+optics+transceiver\" bundle."
-
-          - alertname: NetworkTransceiverMissingData
-            eval_time: 16m
-            exp_alerts:
-              - exp_labels:
-                  severity: high
-                  instance: 127.0.0.1:9100
-                  device: eno2np2
-                exp_annotations:
-                  summary: Transceiver in network interface eno2np2 is missing diagnostic data
-                  action: Make sure driver and firmware are compatible, and the transceiver is present
