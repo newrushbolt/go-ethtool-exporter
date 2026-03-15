@@ -91,7 +91,6 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 	return strings.Join(versionLines, "\n")
 }
 
-// TODO: to be covered by some kind of tests
 func collectMetrics() registry.RegistryCollection {
 	allMetricRegistries := registry.RegistryCollection{}
 
@@ -188,7 +187,6 @@ func init() {
 }
 
 func enableAllMetricCollectionFlags() {
-	// TODO: find better solution because manually adding flags to this block is not fun
 	*collectDriverInfoCommon = true
 	*collectDriverInfoFeatures = true
 	*collectGenericInfoModes = true

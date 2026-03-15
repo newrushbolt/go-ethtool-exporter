@@ -1,6 +1,9 @@
 package main
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +11,7 @@ import (
 	"path"
 	"regexp"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -350,4 +354,70 @@ func TestExporterSingleTextfileOpenMetrics(t *testing.T) {
 	resultedMetrics := string(resultedMetricsBytes)
 
 	assert.Equal(t, strings.TrimSpace(expectedMetric), strings.TrimSpace(resultedMetrics))
+}
+
+func findCollectVarDeclarations(filePath string) ([]string, error) {
+	fileSet := token.NewFileSet()
+	node, err := parser.ParseFile(fileSet, filePath, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	varNames := []string{}
+	for _, decl := range node.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+			for _, name := range valueSpec.Names {
+				if strings.HasPrefix(name.Name, "collect") && name.Name != "collectAllMetrics" {
+					varNames = append(varNames, name.Name)
+				}
+			}
+		}
+	}
+	sort.Strings(varNames)
+	return varNames, nil
+}
+
+func findCollectVarsInFunc(filePath string, funcName string) ([]string, error) {
+	fileSet := token.NewFileSet()
+	node, err := parser.ParseFile(fileSet, filePath, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	varNames := []string{}
+	for _, decl := range node.Decls {
+		funcDecl, ok := decl.(*ast.FuncDecl)
+		if !ok || funcDecl.Name.Name != funcName {
+			continue
+		}
+		ast.Inspect(funcDecl.Body, func(astNode ast.Node) bool {
+			ident, ok := astNode.(*ast.Ident)
+			if ok && strings.HasPrefix(ident.Name, "collect") {
+				varNames = append(varNames, ident.Name)
+			}
+			return true
+		})
+	}
+	sort.Strings(varNames)
+	return varNames, nil
+}
+
+func TestEnableAllMetricCollectionFlagsCompleteness(t *testing.T) {
+	declaredFlags, err := findCollectVarDeclarations("exporter_cmd.go")
+	if err != nil {
+		t.Fatalf("Failed to parse exporter_cmd.go: %v", err)
+	}
+
+	enabledFlags, err := findCollectVarsInFunc("exporter.go", "enableAllMetricCollectionFlags")
+	if err != nil {
+		t.Fatalf("Failed to parse exporter.go: %v", err)
+	}
+
+	assert.Equal(t, declaredFlags, enabledFlags,
+		"collect* flags declared in exporter_cmd.go must match those set in enableAllMetricCollectionFlags()")
 }
