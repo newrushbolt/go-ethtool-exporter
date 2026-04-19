@@ -4,12 +4,27 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
-// TODO: actually implement function, return proper error and test it
-func sanitizelabelPair(labelName, labelValue string) (string, string) {
-	// slog.Error("Skipping label for metric", "metric", metricRecord.Name, "labelName", labelName, "labelValue", labelValue, "error", err)
-	return labelName, labelValue
+var labelValueSanitizer = strings.NewReplacer(
+	"\n", "",
+	"\\", "",
+	"\"", "",
+)
+
+var validLabelNameRE = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+func sanitizelabelPair(labelName, labelValue string) (string, string, bool) {
+	if !validLabelNameRE.MatchString(labelName) {
+		slog.Warn("Dropping invalid metric label name", "original", labelName)
+		return "", "", false
+	}
+
+	cleanValue := labelValueSanitizer.Replace(labelValue)
+
+	return labelName, cleanValue, true
 }
 
 func MustWriteTextfile(filePath string, fileContent string) {

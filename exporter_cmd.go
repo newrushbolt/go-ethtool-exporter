@@ -34,6 +34,11 @@ var (
 	// FLAG GROUP START: Various paths settings
 	linuxNetClassPath = kingpin.Flag("path.sysfs.net.class", "").Default("/sys/class/net").ExistingDir()
 	textfileDirectory = kingpin.Flag("path.textfile-directory", "Path to the node_exporter textfile directory. Only used in 'single-textfile' and 'loop-textfile' modes").Default("/var/lib/node-exporter/textfiles").String()
+	// format used when writing metrics to a textfile (either via single-textfile or loop-textfile).
+	// uses Enum to limit choices like listLabelFormat does; result is a *string.
+	textfileFormatStr = kingpin.Flag("textfile-format", "Format for textfile output").
+				Default("prometheus-0.0.4").
+				Enum("prometheus-0.0.4", "openmetrics-1.0.0")
 	// FLAG GROUP END
 
 	// FLAG GROUP START: Collectors, enabled by default
@@ -68,23 +73,18 @@ var (
 	// Detect aliases and naming types?
 	// FLAG GROUP END
 
-	// To be moved
-	//  Keep absent metrics, setting 'Nan' value for every metric that was not found
-	// Absent metrics (*float64 nil) behavior
-	// https://github.com/newrushbolt/go-ethtool-metrics/tree/v0.0.10?tab=readme-ov-file#missing-metrics
-
-	// FLAG GROUP START: Absent metrics exposure. This controls how to expose missing metrics: via Nan values of the same metrics, via counter metrics, counting how many metrics are missing per collector, or via special per-metric metrics, exposing full missing label name via label
+	// FLAG GROUP START: Absent metrics exposure. Read more in file:///./ABSENT_METRICS.md
 	absentMetricsDriverInfoExposeNan           = kingpin.Flag("absent-metrics-driver-info-expose-nan", "").Default("false").Bool()
-	absentMetricsDriverInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-driver-info-expose-total-counter", "").Default("false").Bool()
+	absentMetricsDriverInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-driver-info-expose-total-counter", "").Default("true").Bool()
 	absentMetricsDriverInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-driver-info-expose-detailed-info", "").Default("false").Bool()
 	absentMetricsGenericInfoExposeNan          = kingpin.Flag("absent-metrics-generic-info-expose-nan", "").Default("false").Bool()
-	absentMetricsGenericInfoExposeTotalCounter = kingpin.Flag("absent-metrics-generic-info-expose-total-counter", "").Default("false").Bool()
+	absentMetricsGenericInfoExposeTotalCounter = kingpin.Flag("absent-metrics-generic-info-expose-total-counter", "").Default("true").Bool()
 	absentMetricsGenericInfoExposeDetailedInfo = kingpin.Flag("absent-metrics-generic-info-expose-detailed-info", "").Default("false").Bool()
-	absentMetricsModuleInfoExposeNan           = kingpin.Flag("absent-metrics-module-info-expose-nan", "").Default("true").Bool()
-	absentMetricsModuleInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-module-info-expose-total-counter", "").Default("false").Bool()
-	absentMetricsModuleInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-module-info-expose-detailed-info", "").Default("false").Bool()
+	absentMetricsModuleInfoExposeNan           = kingpin.Flag("absent-metrics-module-info-expose-nan", "").Default("false").Bool()
+	absentMetricsModuleInfoExposeTotalCounter  = kingpin.Flag("absent-metrics-module-info-expose-total-counter", "").Default("true").Bool()
+	absentMetricsModuleInfoExposeDetailedInfo  = kingpin.Flag("absent-metrics-module-info-expose-detailed-info", "").Default("true").Bool()
 	absentMetricsStatisticsExposeNan           = kingpin.Flag("absent-metrics-statistics-expose-nan", "").Default("false").Bool()
-	absentMetricsStatisticsExposeTotalCounter  = kingpin.Flag("absent-metrics-statistics-expose-total-counter", "").Default("false").Bool()
+	absentMetricsStatisticsExposeTotalCounter  = kingpin.Flag("absent-metrics-statistics-expose-total-counter", "").Default("true").Bool()
 	absentMetricsStatisticsExposeDetailedInfo  = kingpin.Flag("absent-metrics-statistics-expose-detailed-info", "").Default("false").Bool()
 	// FLAG GROUP END
 
@@ -94,4 +94,5 @@ var (
 	statisticsGenerateMissingPerQueueMetrics = kingpin.Flag("statistics-generate-missing-per-queue-metrics", "Generate missing metrics per queue if missing (eg in Broadcom bnxt_en driver)").Default("true").Bool()
 	listLabelFormat                          = kingpin.Flag("list-label-format", "How to transform lists of strings to prometheus labels").Default("multi-label").Enum("single-label", "multi-label", "both")
 	// FLAG GROUP END
+
 )

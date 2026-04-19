@@ -91,7 +91,6 @@ func getExporterVersion(readBuildInfo func() (*debug.BuildInfo, bool)) string {
 	return strings.Join(versionLines, "\n")
 }
 
-// TODO: to be covered by some kind of tests
 func collectMetrics() registry.RegistryCollection {
 	allMetricRegistries := registry.RegistryCollection{}
 
@@ -163,10 +162,10 @@ func collectMetrics() registry.RegistryCollection {
 	return allMetricRegistries
 }
 
-func writeAllMetricsToTextfiles(metricRegistries registry.RegistryCollection) {
+func writeAllMetricsToTextfiles(metricRegistries registry.RegistryCollection, format registry.MetricsFormat) {
 	textFileName := "ethtool_exporter.prom"
 	textFilePath := path.Join(*textfileDirectory, textFileName)
-	allMetricsString := metricRegistries.GetAllMetricsText()
+	allMetricsString := metricRegistries.GetAllMetricsText(format)
 	registry.MustWriteTextfile(textFilePath, allMetricsString)
 }
 
@@ -184,10 +183,10 @@ func MustDirectoryExist(dirPath *string) {
 func init() {
 	// Moved to separate `init()` in order to work both in exporter and tests
 	initLogger()
+	registry.OutputMetricNamespace = "ethtool"
 }
 
 func enableAllMetricCollectionFlags() {
-	// TODO: find better solution because manually adding flags to this block is not fun
 	*collectDriverInfoCommon = true
 	*collectDriverInfoFeatures = true
 	*collectGenericInfoModes = true
@@ -216,6 +215,12 @@ func main() {
 	kingpin.Version(getExporterVersion(debug.ReadBuildInfo))
 	exporterCommand := kingpin.Parse()
 
+	textfileFormat, err := registry.ParseMetricsFormat(*textfileFormatStr)
+	if err != nil {
+		slog.Error("invalid textfile-format", "value", *textfileFormatStr, "error", err)
+		os.Exit(1)
+	}
+
 	if *collectAllMetrics {
 		slog.Warn("Flag --collect-all-metrics is set, ignoring all other --collect-* flags")
 		enableAllMetricCollectionFlags()
@@ -225,9 +230,9 @@ func main() {
 	case discoverPortsCommand.FullCommand():
 		runDiscoverPortsCommand()
 	case singleTextfileCommand.FullCommand():
-		runSingleTextfileCommand()
+		runSingleTextfileCommand(textfileFormat)
 	case loopTextfileCommand.FullCommand():
-		runLoopTextfileCommand()
+		runLoopTextfileCommand(textfileFormat)
 	case httpServerCommand.FullCommand():
 		runHttpServerCommand()
 	default:

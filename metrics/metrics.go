@@ -17,6 +17,9 @@ import (
 )
 
 const AbsentMetricDetailedName = "missing_metric_info"
+const AbsentMetricTotalName = "missing_metrics_total"
+const AbsentMetricSkippedTotalName = "missing_metrics_skipped_total"
+const MetricParseErrorTotalName = "metric_parse_error_total"
 
 type AbsentMetricsConfig struct {
 	ExposeNan          bool
@@ -46,7 +49,6 @@ func toSnakeCase(inputString string) string {
 }
 
 func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefixes []string, extraLabels map[string]string, absentMetrics AbsentMetricsConfig, listLabelFormat string) {
-	// TODO: add counters for all kind of metric events: parsed structures, parsed floats, parsed nils, parse errors, etc
 	inputStructValue := reflect.ValueOf(inputStruct)
 	switch inputStructValue.Kind() {
 	// Handle pointers
@@ -56,25 +58,29 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 			newPrefixes := slices.Clone(prefixes)
 			MetricListFromStructs(inputStructValue.Elem().Interface(), metricList, newPrefixes, extraLabels, absentMetrics, listLabelFormat)
 		} else {
+			missingMetricName := toSnakeCase(strings.Join(prefixes, "_"))
+
 			inputType := reflect.TypeOf(inputStruct)
 			if inputType != reflect.TypeOf((*float64)(nil)) {
-				slog.Debug("Skipping nil pointer, keeping nils only supporter for float64", "prefixes", prefixes, "type", inputType)
+				slog.Debug("Skipping nil pointer, keeping nils only supported for float64", "metric_name", missingMetricName, "type", inputType)
+				metricList.IncrementCounter(AbsentMetricSkippedTotalName, nil, 1)
 				return
 			}
 
 			if absentMetrics.ExposeNan {
-				slog.Debug("Adding `Nan` for missing float64 metric", "prefixes", prefixes)
+				slog.Debug("Setting `Nan` value for missing metric", "metric_name", missingMetricName, "labels", extraLabels)
 				newPrefixes := slices.Clone(prefixes)
 				nanValue := math.NaN()
 				MetricListFromStructs(nanValue, metricList, newPrefixes, extraLabels, absentMetrics, listLabelFormat)
 			}
 
 			if absentMetrics.ExposeTotalCounter {
-				slog.Debug("To be implemented")
+				slog.Debug("Incrementing total counter for missing metric", "metric_name", missingMetricName, "labels", extraLabels)
+				metricList.IncrementCounter(AbsentMetricTotalName, extraLabels, 1)
 			}
 
 			if absentMetrics.ExposeDetailedInfo {
-				missingMetricName := toSnakeCase(strings.Join(prefixes, "_"))
+				slog.Debug("Adding detailed info for missing metric", "metric_name", missingMetricName, "labels", extraLabels)
 				finalLabels := map[string]string{
 					"metric_name": missingMetricName,
 				}
@@ -89,7 +95,6 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		}
 	// Handle structs
 	case reflect.Struct:
-
 		for structFieldIndex := range inputStructValue.NumField() {
 			field := inputStructValue.Type().Field(structFieldIndex)
 			newPrefixes := append(prefixes, []string{field.Name}...)
@@ -156,9 +161,13 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 			metricIndex, err := metricList.GetMetricIndex(metricName)
 			if err != nil {
 				slog.Error("Error getting metric index", "metricName", metricName, "error", err)
+				metricList.IncrementCounter(MetricParseErrorTotalName, nil, 1)
 				return
 			}
-			// TODO: explain this branch
+
+			// If an info metric with this name already exists, merge labels into it
+			// instead of creating a duplicate. This consolidates multiple string/slice
+			// fields from the same struct into a single info metric with combined labels.
 			if metricIndex != -1 {
 				maps.Insert((*metricList)[metricIndex].Labels, maps.All(metricLabels))
 				return
@@ -167,6 +176,7 @@ func MetricListFromStructs(inputStruct any, metricList *registry.Registry, prefi
 		default:
 			logMetricName := toSnakeCase(strings.Join(prefixes, "_"))
 			slog.Debug("Error: cannot format type as metric value", "kind", inputStructValue.Kind(), "metricName", logMetricName)
+			metricList.IncrementCounter(MetricParseErrorTotalName, nil, 1)
 			return
 		}
 

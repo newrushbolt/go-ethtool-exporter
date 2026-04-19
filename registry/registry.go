@@ -4,10 +4,25 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"slices"
 	"strings"
 )
 
 type Registry []MetricRecord
+
+// OutputMetricNamespace is prepended to metric names while formatting metrics
+// for exposition. Internal metric names in Registry remain unprefixed.
+var OutputMetricNamespace = ""
+
+func namespacedMetricName(metricName string) string {
+	if OutputMetricNamespace == "" {
+		return metricName
+	}
+	if strings.HasPrefix(metricName, OutputMetricNamespace+"_") {
+		return metricName
+	}
+	return OutputMetricNamespace + "_" + metricName
+}
 
 func (metricRegistry *Registry) GetMetricIndex(metricName string) (int, error) {
 	var err error
@@ -33,21 +48,54 @@ func (metricRegistry *Registry) GetMetricIndex(metricName string) (int, error) {
 	}
 }
 
-func (registry *Registry) FormatTextfileString() string {
+func (registry *Registry) FormatTextfileString(format MetricsFormat) string {
 	var allMetricLines []string
+	// keep track of seen metric names for OpenMetrics TYPE annotations
+	seen := map[string]struct{}{}
 
 	for _, metric := range *registry {
-		metricString, err := metric.FormatPrometheusLine()
+		renderMetric := metric
+		renderMetric.Name = namespacedMetricName(metric.Name)
+		metricString, err := renderMetric.FormatPrometheusLine()
 		if err != nil {
 			slog.Error("Cannot format metric: ", "metricFormatError", err)
 			continue
 		}
 		allMetricLines = append(allMetricLines, metricString)
-
+		if format == OpenMetrics_1_0_0 {
+			seen[renderMetric.Name] = struct{}{}
+		}
 	}
 
-	metrics := strings.Join(allMetricLines, "\n")
-	return metrics
+	// assemble output based on format
+	switch format {
+	case OpenMetrics_1_0_0:
+		// prepend TYPE annotations in deterministic order
+		var types []string
+		for name := range seen {
+			types = append(types, name)
+		}
+		slices.Sort(types)
+		var outLines []string
+		for _, name := range types {
+			// TODO: find a way to determine actual metric type
+			outLines = append(outLines, "# TYPE "+name+" UNKNOWN")
+		}
+		outLines = append(outLines, allMetricLines...)
+		outLines = append(outLines, "# EOF")
+		return strings.Join(outLines, "\n")
+	default:
+		return strings.Join(allMetricLines, "\n")
+	}
+}
+
+func (registry *Registry) getMetricIndexByNameAndLabels(metricName string, labels map[string]string) int {
+	for idx, record := range *registry {
+		if record.Name == metricName && maps.Equal(record.Labels, labels) {
+			return idx
+		}
+	}
+	return -1
 }
 
 func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraLabels map[string]string) {
@@ -59,4 +107,30 @@ func (registry *Registry) AddLabelsToSomeMetrics(targetMetricName string, extraL
 			(*registry)[metricIndex].Labels = newLabels
 		}
 	}
+}
+
+func (registry *Registry) IncrementCounter(metricName string, labels map[string]string, incrementValue float64) {
+	idx := registry.getMetricIndexByNameAndLabels(metricName, labels)
+	if idx != -1 {
+		(*registry)[idx].Value += incrementValue
+		return
+	}
+	*registry = append(*registry, MetricRecord{
+		Name:   metricName,
+		Labels: maps.Clone(labels),
+		Value:  incrementValue,
+	})
+}
+
+func (registry *Registry) SetGauge(metricName string, labels map[string]string, value float64) {
+	idx := registry.getMetricIndexByNameAndLabels(metricName, labels)
+	if idx != -1 {
+		(*registry)[idx].Value = value
+		return
+	}
+	*registry = append(*registry, MetricRecord{
+		Name:   metricName,
+		Labels: maps.Clone(labels),
+		Value:  value,
+	})
 }

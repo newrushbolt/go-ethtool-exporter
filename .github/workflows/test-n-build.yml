@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GOOS: linux
-  COVERAGE_THRESHOLD: 86.7
+  COVERAGE_THRESHOLD: 89.5
 
 jobs:
   # Disabled for now, since github-actions REQUIRES docker image to has nodejs runtime in order to do git checkout 🫠

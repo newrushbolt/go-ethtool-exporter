@@ -1,0 +1,27 @@
+---
+# See ABSENT_METRICS.md for details on absent metrics detection approaches
+groups:
+- name: Ethtool Missing Metrics
+  rules:
+  - alert: EthtoolMissingMetrics
+    expr: >-
+        rate(ethtool_missing_metrics_total[5m]) > 0
+    for: 15m
+    labels:
+      severity: warn
+    annotations:
+      summary: >-
+        Ethtool exporter is missing {{ $labels.collector }} metrics for interface {{ $labels.device }}
+      action: >-
+        Check exporter logs with LOG_LEVEL=DEBUG for details. Make sure driver and firmware are compatible, and the transceiver is present
+  - alert: EthtoolMissingMetricDetailed
+    expr: >-
+        ethtool_missing_metric_info == 1
+    for: 15m
+    labels:
+      severity: high
+    annotations:
+      summary: >-
+        Ethtool exporter is missing {{ $labels.collector }} metric {{ $labels.metric_name }} for interface {{ $labels.device }}
+      action: >-
+        Make sure driver and firmware are compatible, and the transceiver is present

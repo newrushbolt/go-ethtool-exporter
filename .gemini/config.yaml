@@ -1,0 +1,7 @@
+code_review:
+  comment_severity_threshold: LOW
+  pull_request_opened:
+    help: false
+    summary: false
+    code_review: true
+    include_drafts: true

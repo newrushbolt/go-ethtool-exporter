@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func TestRegistrySimpleMetric(t *testing.T) {
 	}
 	metricList = append(metricList, metricRecordSimple)
 
-	metricsResult := metricList.FormatTextfileString()
+	metricsResult := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Equal(t, expectedMetricResult, string(metricsResult))
 }
 
@@ -51,7 +52,7 @@ func TestRegistryTooManyLabels(t *testing.T) {
 	var metricList Registry
 	metricList = append(metricList, metricRecordTooMuchLabels)
 
-	metricsResult := metricList.FormatTextfileString()
+	metricsResult := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Empty(t, string(metricsResult))
 }
 
@@ -70,7 +71,7 @@ func TestTextfileWriteError(t *testing.T) {
 		Value:  1,
 	})
 	dirPath := os.TempDir()
-	metrics := metricList.FormatTextfileString()
+	metrics := metricList.FormatTextfileString(Prometheus_0_0_4)
 	assert.Panics(t, func() { MustWriteTextfile(dirPath, metrics) })
 }
 
@@ -103,4 +104,71 @@ func TestGetMetricIndex_MultipleMatches(t *testing.T) {
 	assert.Equal(t, -1, idx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "multiple metrics with the same name <foo>")
+}
+
+func TestRegistryOpenMetricsAnnotations(t *testing.T) {
+	var metricList Registry
+	metricList = append(metricList, MetricRecord{Name: "m1", Labels: nil, Value: 1})
+	metricList = append(metricList, MetricRecord{Name: "m2", Labels: map[string]string{"k": "v"}, Value: 2})
+	result := metricList.FormatTextfileString(OpenMetrics_1_0_0)
+	// should contain TYPE lines for both metrics and EOF at the end
+	assert.Contains(t, result, "# TYPE m1 UNKNOWN")
+	assert.Contains(t, result, "# TYPE m2 UNKNOWN")
+	assert.True(t, strings.HasSuffix(result, "# EOF"))
+}
+
+func TestNamespacedMetricName_EmptyNamespace(t *testing.T) {
+	// Temporarily overriding OutputMetricNamespace for testing
+	// Will be set back to "" by defer so it wont affect other tests
+	OutputMetricNamespace = ""
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "my_metric", namespacedMetricName("my_metric"))
+}
+
+func TestNamespacedMetricName_WithNamespace(t *testing.T) {
+	OutputMetricNamespace = "ethtool"
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "ethtool_my_metric", namespacedMetricName("my_metric"))
+}
+
+func TestNamespacedMetricName_AlreadyPrefixed(t *testing.T) {
+	OutputMetricNamespace = "ethtool"
+	defer func() { OutputMetricNamespace = "" }()
+
+	assert.Equal(t, "ethtool_my_metric", namespacedMetricName("ethtool_my_metric"))
+}
+
+func TestSetGauge_NewMetric(t *testing.T) {
+	var reg Registry
+	labels := map[string]string{"iface": "eth0"}
+	reg.SetGauge("temperature", labels, 42.5)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}, reg)
+}
+
+func TestSetGauge_UpdateExisting(t *testing.T) {
+	reg := Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}
+	reg.SetGauge("temperature", map[string]string{"iface": "eth0"}, 99.0)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 99.0},
+	}, reg)
+}
+
+func TestSetGauge_DifferentLabelsAddsNew(t *testing.T) {
+	reg := Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+	}
+	reg.SetGauge("temperature", map[string]string{"iface": "eth1"}, 10.0)
+
+	assert.Equal(t, Registry{
+		{Name: "temperature", Labels: map[string]string{"iface": "eth0"}, Value: 42.5},
+		{Name: "temperature", Labels: map[string]string{"iface": "eth1"}, Value: 10.0},
+	}, reg)
 }

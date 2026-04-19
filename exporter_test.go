@@ -1,6 +1,9 @@
 package main
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +11,8 @@ import (
 	"path"
 	"regexp"
 	"runtime/debug"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -70,6 +75,9 @@ func TestExporterVersionBuildInfoError(t *testing.T) {
 }
 
 func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
+	registry.OutputMetricNamespace = ""
+	t.Cleanup(func() { registry.OutputMetricNamespace = "ethtool" })
+
 	expectedMetrics := `dummy_metric{foo="bar"} 42`
 	dir := t.TempDir()
 	textfileDirectory = &dir // override global pointer for test
@@ -85,7 +93,7 @@ func TestExporterWriteAllMetricsToTextfiles(t *testing.T) {
 		"eth0": eth0Registry,
 	}
 
-	writeAllMetricsToTextfiles(registries)
+	writeAllMetricsToTextfiles(registries, registry.Prometheus_0_0_4)
 
 	filePath := dir + "/ethtool_exporter.prom"
 	metrics, err := os.ReadFile(filePath)
@@ -110,6 +118,9 @@ func TestExporterDirectoryMustExist(t *testing.T) {
 func ptr[T any](v T) *T { return &v }
 
 func setupHttpHandlerFlags(t *testing.T) {
+	registry.OutputMetricNamespace = ""
+	t.Cleanup(func() { registry.OutputMetricNamespace = "ethtool" })
+
 	// Set test-specific overrides
 	portsRegexp := regexp.MustCompile("eth4")
 	discoverPortsRegexp = &portsRegexp
@@ -226,6 +237,45 @@ func TestExporterHttpMetricsHandlerFail(t *testing.T) {
 	assert.Equal(t, expectedMetricResult, string(body))
 }
 
+func TestExporterHttpMetricsHandlerOpenMetrics(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	req.Header.Set("Accept", registry.OpenMetrics_1_0_0.ContentType())
+	metricsHandler(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, registry.OpenMetrics_1_0_0.ContentType(), resp.Header.Get("Content-Type"))
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+
+	// Expect that body starts with a TYPE annotation and ends with EOF marker
+	assert.True(t, strings.HasPrefix(string(body), "# TYPE"), "body should start with TYPE")
+	assert.True(t, strings.HasSuffix(string(body), "# EOF"), "body should end with EOF")
+}
+
+func TestExporterHttpMetricsHandlerUnsupportedAccept(t *testing.T) {
+	setupHttpHandlerFlags(t)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/metrics", nil)
+	req.Header.Set("Accept", "application/json")
+
+	loggingAndFilterMiddleware(http.HandlerFunc(metricsHandler)).ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusNotAcceptable, resp.StatusCode)
+}
+
 type errorWriter struct {
 	http.ResponseWriter
 }
@@ -264,7 +314,7 @@ func TestExporterSingleTextfile(t *testing.T) {
 	*textfileDirectory, err = os.MkdirTemp(".", ".test-textfiles-*")
 	defer os.RemoveAll(*textfileDirectory)
 	assert.NoError(t, err)
-	runSingleTextfileCommand()
+	runSingleTextfileCommand(registry.Prometheus_0_0_4)
 
 	expectedMetricBytes, err := os.ReadFile("testdata/eth4.generic_info.prom")
 	if err != nil {
@@ -279,4 +329,95 @@ func TestExporterSingleTextfile(t *testing.T) {
 	resultedMetrics := string(resultedMetricsBytes)
 
 	assert.Equal(t, expectedMetric, resultedMetrics)
+}
+
+func TestExporterSingleTextfileOpenMetrics(t *testing.T) {
+	setupHttpHandlerFlags(t)
+	var err error
+	*textfileDirectory, err = os.MkdirTemp(".", ".test-textfiles-*")
+	defer os.RemoveAll(*textfileDirectory)
+	assert.NoError(t, err)
+
+	// request openmetrics format explicitly
+	runSingleTextfileCommand(registry.OpenMetrics_1_0_0)
+
+	expectedMetricBytes, err := os.ReadFile("testdata/eth4.generic_info.openmetrics.prom")
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	expectedMetric := string(expectedMetricBytes)
+
+	resultedMetricsBytes, err := os.ReadFile(path.Join(*textfileDirectory, "ethtool_exporter.prom"))
+	if err != nil {
+		t.Fatalf("Failed to read expected metrics: %v", err)
+	}
+	resultedMetrics := string(resultedMetricsBytes)
+
+	assert.Equal(t, strings.TrimSpace(expectedMetric), strings.TrimSpace(resultedMetrics))
+}
+
+func findCollectVarDeclarations(filePath string) ([]string, error) {
+	fileSet := token.NewFileSet()
+	node, err := parser.ParseFile(fileSet, filePath, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	varNames := []string{}
+	for _, decl := range node.Decls {
+		genDecl, ok := decl.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range genDecl.Specs {
+			valueSpec := spec.(*ast.ValueSpec)
+			for _, name := range valueSpec.Names {
+				if strings.HasPrefix(name.Name, "collect") && name.Name != "collectAllMetrics" {
+					varNames = append(varNames, name.Name)
+				}
+			}
+		}
+	}
+	sort.Strings(varNames)
+	return varNames, nil
+}
+
+func findCollectVarsInFunc(filePath string, funcName string) ([]string, error) {
+	fileSet := token.NewFileSet()
+	node, err := parser.ParseFile(fileSet, filePath, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	varNames := []string{}
+	for _, decl := range node.Decls {
+		funcDecl, ok := decl.(*ast.FuncDecl)
+		if !ok || funcDecl.Name.Name != funcName {
+			continue
+		}
+		ast.Inspect(funcDecl.Body, func(astNode ast.Node) bool {
+			ident, ok := astNode.(*ast.Ident)
+			if ok && strings.HasPrefix(ident.Name, "collect") {
+				varNames = append(varNames, ident.Name)
+			}
+			return true
+		})
+	}
+	sort.Strings(varNames)
+	return varNames, nil
+}
+
+func TestEnableAllMetricCollectionFlagsCompleteness(t *testing.T) {
+	declaredFlags, err := findCollectVarDeclarations("exporter_cmd.go")
+	if err != nil {
+		t.Fatalf("Failed to parse exporter_cmd.go: %v", err)
+	}
+
+	enabledFlags, err := findCollectVarsInFunc("exporter.go", "enableAllMetricCollectionFlags")
+	if err != nil {
+		t.Fatalf("Failed to parse exporter.go: %v", err)
+	}
+
+	assert.Equal(t, declaredFlags, enabledFlags,
+		"collect* flags declared in exporter_cmd.go must match those set in enableAllMetricCollectionFlags()")
 }

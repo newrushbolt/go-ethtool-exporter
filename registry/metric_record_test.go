@@ -25,3 +25,16 @@ func TestFormatPrometheusLineLabelSorting(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, line, expectedSortedLine)
 }
+
+func TestFormatPrometheusLineDropsInvalidLabels(t *testing.T) {
+	rec := MetricRecord{
+		Name:   "metricDropInvalid",
+		Labels: map[string]string{"ok": "1", "bad-name": "2"},
+		Value:  1,
+	}
+
+	line, err := rec.FormatPrometheusLine()
+
+	assert.NoError(t, err)
+	assert.Equal(t, `metricDropInvalid{ok="1"} 1`, line)
+}
